@@ -41,6 +41,9 @@ final class MenuViewPolicy
         'com_dharmashop_landing' => ['landing'],
     ];
 
+    /** Виды Dharma Shop, у которых корень (id 0 или 1) — страница со списком всего каталога. */
+    private const ROOT_LISTS = ['category', 'brand', 'badge'];
+
     /**
      * @return array{verdict: string, option: string, view: string, id: int}
      */
@@ -67,6 +70,12 @@ final class MenuViewPolicy
         // Главная — это адрес `/`, а не адрес сущности, на которую она ссылается.
         if (!$home && \in_array($view, self::COVERED_VIEWS[$option] ?? [], true)) {
             $result['verdict'] = self::COVERED;
+        }
+
+        // Корень (id 0 или 1) у категорий, брендов и бейджей Dharma Shop — это список всего каталога, а не сущность: источники сущностей
+        // отдают только записи с id больше 1, поэтому страница корня берётся из меню.
+        if ($result['verdict'] === self::COVERED && $option === 'com_dharmashop' && \in_array($view, self::ROOT_LISTS, true) && $id <= 1) {
+            $result['verdict'] = self::INCLUDE;
         }
 
         return $result;

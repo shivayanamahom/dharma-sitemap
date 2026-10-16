@@ -88,6 +88,21 @@ final class DharmaShopSource implements SitemapSourceInterface
         };
         $entries = [];
 
+        // Страница-корень брендов и бейджей (`view=brand&id=1`): общий список. Без пункта меню её адрес — `/component/dharmashop/badge`,
+        // с пунктом меню роутер вернёт адрес пункта (дубль с источником меню отсекается). Нужна, только если есть что показывать.
+        if ($afterId === null && $rows && \in_array($this->kind, ['brands', 'badges'], true)) {
+            $root = $this->route('index.php?option=com_dharmashop&view=' . $view . '&id=1');
+
+            if ($root !== null) {
+                $entries[] = [
+                    'url' => $root,
+                    'lastmod' => null,
+                    'identity' => $this->getId() . ':root:*',
+                    'robots' => RobotsPolicy::effective(MenuRobotsIndex::lookup($this->db, 'com_dharmashop', $this->kind, 0), $shopRobots),
+                ];
+            }
+        }
+
         foreach ($rows as $row) {
             $url = 'index.php?option=' . $option . '&view=' . $view . '&id=' . (int) $row->id;
 
@@ -99,9 +114,9 @@ final class DharmaShopSource implements SitemapSourceInterface
                 $url .= '&lang=' . rawurlencode((string) $row->language);
             }
 
-            try {
-                $absolute = Route::link('site', $url, false, Route::TLS_FORCE, true);
-            } catch (\Throwable) {
+            $absolute = $this->route($url);
+
+            if ($absolute === null) {
                 continue;
             }
 
@@ -116,6 +131,15 @@ final class DharmaShopSource implements SitemapSourceInterface
         }
 
         return ['entries' => $entries, 'next_cursor' => \count($rows) === $limit ? (int) end($rows)->id : null];
+    }
+
+    private function route(string $url): ?string
+    {
+        try {
+            return Route::link('site', $url, false, Route::TLS_FORCE, true);
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**

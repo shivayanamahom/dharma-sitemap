@@ -168,6 +168,12 @@ foreach ([['com_content', 'article'], ['com_content', 'category'], ['com_dharmas
 foreach ([['com_dharmashop', 'categories&id=0'], ['com_dharmashop', 'brands&id=0'], ['com_dharmashop', 'badges'], ['com_dharmashop_landing', 'landings'], ['com_content', 'featured'], ['com_content', 'categories&id=2'], ['com_tags', 'tags']] as [$component, $name]) {
     check("$component $name comes from the menu", $view("index.php?option=$component&view=$name"), MenuViewPolicy::INCLUDE);
 }
+foreach ([['category', 0], ['category', 1], ['brand', 0], ['badge', 1]] as [$name, $rootId]) {
+    check("shop $name root (id $rootId) is a list page from the menu", $view("index.php?option=com_dharmashop&view=$name&id=$rootId"), MenuViewPolicy::INCLUDE);
+}
+check('shop category without id is a list page', $view('index.php?option=com_dharmashop&view=category'), MenuViewPolicy::INCLUDE);
+check('shop category with id stays covered', $view('index.php?option=com_dharmashop&view=category&id=52'), MenuViewPolicy::COVERED);
+check('content category root is not a shop list', $view('index.php?option=com_content&view=category&id=0'), MenuViewPolicy::COVERED);
 check('home article keeps the root address', $view('index.php?option=com_content&view=article&id=3', true), MenuViewPolicy::INCLUDE);
 check('home cart is still private', $view('index.php?option=com_dharmashop&view=cart', true), MenuViewPolicy::PRIVATE);
 check('link without component is skipped', $view('index.php?view=article'), MenuViewPolicy::SKIP);
