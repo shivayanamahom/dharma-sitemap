@@ -27,7 +27,7 @@ build_plugin() {
 COMPONENT_STAGE="$BUILD_ROOT/com_dharmasitemap"
 mkdir -p "$COMPONENT_STAGE/admin" "$COMPONENT_STAGE/site" "$COMPONENT_STAGE/language"
 cp "$PROJECT_ROOT/com_dharmasitemap/admin/dharmasitemap.xml" "$COMPONENT_STAGE/dharmasitemap.xml"
-cp -R "$PROJECT_ROOT/com_dharmasitemap/admin/access.xml" "$PROJECT_ROOT/com_dharmasitemap/admin/config.xml" "$PROJECT_ROOT/com_dharmasitemap/admin/services" "$PROJECT_ROOT/com_dharmasitemap/admin/src" "$PROJECT_ROOT/com_dharmasitemap/admin/sql" "$PROJECT_ROOT/com_dharmasitemap/admin/language" "$COMPONENT_STAGE/admin/"
+cp -R "$PROJECT_ROOT/com_dharmasitemap/admin/access.xml" "$PROJECT_ROOT/com_dharmasitemap/admin/config.xml" "$PROJECT_ROOT/com_dharmasitemap/admin/services" "$PROJECT_ROOT/com_dharmasitemap/admin/src" "$PROJECT_ROOT/com_dharmasitemap/admin/sql" "$PROJECT_ROOT/com_dharmasitemap/admin/tmpl" "$PROJECT_ROOT/com_dharmasitemap/admin/language" "$COMPONENT_STAGE/admin/"
 cp -R "$PROJECT_ROOT/com_dharmasitemap/site/src" "$COMPONENT_STAGE/site/"
 cp -R "$PROJECT_ROOT/com_dharmasitemap/language/ru-RU" "$PROJECT_ROOT/com_dharmasitemap/language/en-GB" "$COMPONENT_STAGE/language/"
 sed -i.bak -E "s#<version>[^<]+</version>#<version>$DHARMA_SITEMAP_VERSION</version>#g" "$COMPONENT_STAGE/dharmasitemap.xml"
