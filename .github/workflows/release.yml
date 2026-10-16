@@ -36,7 +36,11 @@ jobs:
         run: |
           RELEASE_VERSION="${RELEASE_TAG#v}"
           RELEASE_ARCHIVE="pkg_dharmasitemap-${RELEASE_VERSION}.zip"
-          gh release create "$RELEASE_TAG" "dist/$RELEASE_ARCHIVE" dist/SHA256SUMS.txt --title "Dharma Sitemap $RELEASE_VERSION" --generate-notes
+          # Постоянное имя файла: ссылка releases/latest/download/pkg_dharmasitemap.zip всегда ведёт на последнюю версию.
+          cp "dist/$RELEASE_ARCHIVE" dist/pkg_dharmasitemap.zip
+          RELEASE_SHA256="$(awk '{print $1}' dist/SHA256SUMS.txt)"
+          python3 dev/release_notes.py --version "$RELEASE_VERSION" --sha256 "$RELEASE_SHA256" > dist/RELEASE_NOTES.md
+          gh release create "$RELEASE_TAG" "dist/$RELEASE_ARCHIVE" dist/pkg_dharmasitemap.zip dist/SHA256SUMS.txt --title "$RELEASE_TAG — Dharma Sitemap" --notes-file dist/RELEASE_NOTES.md
       - name: Publish update feed
         env:
           GH_TOKEN: ${{ github.token }}

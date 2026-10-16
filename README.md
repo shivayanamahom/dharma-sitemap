@@ -1,6 +1,35 @@
 # Dharma Sitemap
 
+[![Release](https://img.shields.io/github/v/release/shivayanamahom/dharma-sitemap?color=blue)](https://github.com/shivayanamahom/dharma-sitemap/releases)
+[![CI](https://github.com/shivayanamahom/dharma-sitemap/actions/workflows/ci.yml/badge.svg)](https://github.com/shivayanamahom/dharma-sitemap/actions/workflows/ci.yml)
+[![Joomla](https://img.shields.io/badge/Joomla-6.x-orange.svg)](https://www.joomla.org/)
+[![PHP](https://img.shields.io/badge/PHP-8.3%2B-777bb4.svg)](https://www.php.net/)
+[![License: GPL-2.0+](https://img.shields.io/badge/License-GPL--2.0%2B-blue.svg)](LICENSE)
+
 Расширяемый генератор XML-карт сайта для Joomla: ядро Joomla, Dharma Shop и сторонние источники URL через плагины.
+
+## Установка
+
+### Вариант 1: Прямая установка по URL (рекомендуется)
+
+Ссылка всегда ведёт на **последний** релиз:
+
+```text
+https://github.com/shivayanamahom/dharma-sitemap/releases/latest/download/pkg_dharmasitemap.zip
+```
+
+1. В админке Joomla: **Система** → **Установка** → **Расширения** → вкладка **«Установить по URL-адресу»**.
+2. Вставьте ссылку в поле **«URL пакета установки»**.
+3. Нажмите **«Проверить и установить»**.
+
+Обновления приходят штатно: **Система → Обновление → Расширения**.
+
+### Вариант 2: Установка из архива
+
+1. Скачайте `pkg_dharmasitemap-<версия>.zip` со страницы [Releases](https://github.com/shivayanamahom/dharma-sitemap/releases).
+2. **Система** → **Установка** → **Расширения** → вкладка **«Загрузить файл пакета»**.
+
+Требования: Joomla 6, PHP 8.3+, HTTPS. После установки откройте **Компоненты → Dharma Sitemap** и нажмите **«Собрать сейчас»**.
 
 > Статус: версия `0.3.0` (см. [историю изменений](CHANGELOG.md)). Карта не включает страницы с `noindex` и личные страницы магазина, охватывает товары, категории, бренды, бейджи и посадочные страницы Dharma Shop, а также страницы из меню. Для карты из одной части корневой файл напрямую содержит URL; для больших карт используется индекс.
 

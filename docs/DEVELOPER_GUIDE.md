@@ -53,4 +53,4 @@ python3 dev/check_languages.py  # ключи ru-RU и en-GB совпадают, 
 unzip -tqq dist/pkg_dharmasitemap-$(cat VERSION).zip
 ```
 
-GitHub Actions запускается на теге `v*`: собирает пакет, вычисляет SHA-256, создаёт GitHub Release и обновляет публичный `updates.xml`. Версию повышайте только при подготовке релиза; версии всех вложенных расширений берутся из `VERSION` во время сборки.
+GitHub Actions запускается на теге `v*`: проверяет и собирает пакет, вычисляет SHA-256, создаёт GitHub Release (текст — раздел версии из `CHANGELOG.md` плюс блок быстрой установки по URL, `dev/release_notes.py`; файлы `pkg_dharmasitemap-<версия>.zip` и `pkg_dharmasitemap.zip` для ссылки `releases/latest/download/`) и обновляет публичный `updates.xml`. Перед тегом добавьте в `CHANGELOG.md` раздел `## <версия>`. Версию повышайте только при подготовке релиза; версии всех вложенных расширений берутся из `VERSION` во время сборки.
