@@ -302,6 +302,33 @@ final class SitemapBuilder
             }
         }
 
+        // A single sitemap is clearer and more compact as a urlset at /sitemap.xml.
+        // Keep a sitemap index only when URL count requires multiple files.
+        if ($parts <= 1) {
+            $xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" . $marker . "\n";
+            if ($parts === 1) {
+                $partContents = file_get_contents($cacheDirectory . '/sitemap-1.xml');
+                if ($partContents === false) {
+                    throw new \RuntimeException('Не удалось прочитать собранную карту сайта.');
+                }
+                $partContents = preg_replace('/^<\?xml[^>]*\?>\s*/', '', $partContents, 1) ?? $partContents;
+                $xml .= $partContents;
+            } else {
+                $xml .= "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\"></urlset>\n";
+            }
+
+            $temporaryIndex = tempnam($root, '.dharmasitemap-index-');
+            if ($temporaryIndex === false || file_put_contents($temporaryIndex, $xml, LOCK_EX) !== strlen($xml)
+                || !chmod($temporaryIndex, 0644) || !rename($temporaryIndex, $indexPath)) {
+                if (is_string($temporaryIndex) && is_file($temporaryIndex)) {
+                    unlink($temporaryIndex);
+                }
+                throw new \RuntimeException('Не удалось атомарно опубликовать статический файл sitemap.xml.');
+            }
+
+            return;
+        }
+
         $locations = [];
         for ($part = 1; $part <= $parts; $part++) {
             $filename = 'sitemap-' . $buildId . '-' . $part . '.xml';
