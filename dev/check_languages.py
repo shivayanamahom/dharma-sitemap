@@ -50,6 +50,25 @@ for path in sources:
         if key not in known:
             errors.append(f'{path.relative_to(ROOT)}: ключ {key} не определён ни в одном языковом файле')
 
+# Заголовки в меню админки Joomla переводит только .sys.ini: ключи из манифеста должны быть там, иначе в меню виден сам ключ.
+for manifest in sorted(ROOT.rglob('*.xml')):
+    if {'build', 'dist', '.github'} & set(manifest.relative_to(ROOT).parts):
+        continue
+    text = manifest.read_text(encoding='utf-8')
+    if '<extension' not in text:
+        continue
+    keys = set(re.findall(r'<menu[^>]*>([A-Z][A-Z0-9_]+)</menu>', text)) | set(re.findall(r'<name>([A-Z][A-Z0-9_]+)</name>', text))
+    if not keys:
+        continue
+    for lang in ('ru-RU', 'en-GB'):
+        sys_files = [p for p in ROOT.rglob(f'{lang}/*.sys.ini') if not {'build', 'dist'} & set(p.relative_to(ROOT).parts)
+                     and p.parent.parent in (manifest.parent, manifest.parent / 'language', manifest.parent / 'admin' / 'language')]
+        defined = set()
+        for p in sys_files:
+            defined |= set(load(p))
+        for key in sorted(keys - defined):
+            errors.append(f'{manifest.relative_to(ROOT)}: ключ {key} из манифеста не определён в .sys.ini ({lang})')
+
 if errors:
     print('\n'.join(errors))
     sys.exit(1)
