@@ -25,7 +25,7 @@ final class SitemapBuilder
     public function build(): array
     {
         $params = ComponentHelper::getParams('com_dharmasitemap');
-        $this->partSize = max(1000, min(50000, $params->getInt('part_size', 45000)));
+        $this->partSize = max(1000, min(50000, (int) $params->get('part_size', 45000)));
         $this->ensureTables();
         $lockToken = $this->acquireLock();
         $db = $this->db;
