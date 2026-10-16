@@ -8,6 +8,7 @@ use Dharma\Component\DharmaSitemap\Administrator\Service\PublicAccess;
 use Dharma\Component\DharmaSitemap\Administrator\Service\RobotsPolicy;
 use Dharma\Component\DharmaSitemap\Administrator\Source\SitemapSourceInterface;
 use Joomla\CMS\Component\ComponentHelper;
+use Joomla\CMS\Factory;
 use Joomla\CMS\Router\Route;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
@@ -80,7 +81,9 @@ final class DharmaShopSource implements SitemapSourceInterface
         $afterIdValue = $afterId ?? 0;
         $query->where('x.id > :afterId')->bind(':afterId', $afterIdValue, ParameterType::INTEGER)->order('x.id ASC');
         $rows = $this->db->setQuery($query, 0, $limit)->loadObjectList();
-        $shopRobots = (string) (ComponentHelper::getParams('com_dharmashop')->get('seo_robots') ?: 'index, follow');
+        // Настройка магазина «Robots»: пусто — «как в общих настройках Joomla» (значение по умолчанию с версии магазина, где это введено).
+        $shopRobots = trim((string) ComponentHelper::getParams('com_dharmashop')->get('seo_robots', '')) ?: null;
+        $global = (string) Factory::getApplication()->get('robots', '');
         [$option, $view] = match ($this->kind) {
             'products' => ['com_dharmashop', 'product'],
             'landings' => ['com_dharmashop_landing', 'landing'],
@@ -98,7 +101,7 @@ final class DharmaShopSource implements SitemapSourceInterface
                     'url' => $root,
                     'lastmod' => null,
                     'identity' => $this->getId() . ':root:*',
-                    'robots' => RobotsPolicy::effective(MenuRobotsIndex::lookup($this->db, 'com_dharmashop', $this->kind, 0), $shopRobots),
+                    'robots' => RobotsPolicy::effective(MenuRobotsIndex::lookup($this->db, 'com_dharmashop', $this->kind, 0), $shopRobots, $global),
                 ];
             }
         }
@@ -120,13 +123,13 @@ final class DharmaShopSource implements SitemapSourceInterface
                 continue;
             }
 
-            // Свой robots записи → robots пункта меню этой страницы → настройка магазина (как в PageSeo магазина).
+            // Свой robots записи → robots пункта меню этой страницы → настройка магазина → общая настройка Joomla (как в PageSeo магазина).
             $own = $this->kind === 'landings' ? trim((string) ($row->robots ?? '')) : RobotsPolicy::fromMetadata($row->metadata ?? null);
             $entries[] = [
                 'url' => $absolute,
                 'lastmod' => $row->modified ?: null,
                 'identity' => $this->getId() . ':' . $row->id . ':' . ($row->language ?? '*'),
-                'robots' => RobotsPolicy::effective($own, MenuRobotsIndex::lookup($this->db, $option, $view, (int) $row->id), $shopRobots),
+                'robots' => RobotsPolicy::effective($own, MenuRobotsIndex::lookup($this->db, $option, $view, (int) $row->id), $shopRobots, $global),
             ];
         }
 

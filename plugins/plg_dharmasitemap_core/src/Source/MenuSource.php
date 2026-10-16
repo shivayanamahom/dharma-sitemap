@@ -70,7 +70,7 @@ final class MenuSource implements SitemapSourceInterface
             ->where('m.id > :afterId')->bind(':afterId', $afterIdValue, ParameterType::INTEGER)->order('m.id ASC');
         $rows = $db->setQuery($query, 0, $limit)->loadObjectList();
         $global = (string) Factory::getApplication()->get('robots', '');
-        $shop = (string) (ComponentHelper::getParams('com_dharmashop')->get('seo_robots') ?: 'index, follow');
+        $shop = trim((string) ComponentHelper::getParams('com_dharmashop')->get('seo_robots', '')) ?: null;
         $entries = [];
 
         foreach ($rows as $row) {
@@ -97,7 +97,7 @@ final class MenuSource implements SitemapSourceInterface
                 'url' => $absolute,
                 'lastmod' => null,
                 'identity' => $this->getId() . ':' . $row->id . ':' . ($language !== '' ? $language : '*'),
-                'robots' => RobotsPolicy::effective(RobotsPolicy::fromParams($row->params), \in_array($page['option'], self::SHOP_COMPONENTS, true) ? $shop : $global),
+                'robots' => RobotsPolicy::effective(RobotsPolicy::fromParams($row->params), \in_array($page['option'], self::SHOP_COMPONENTS, true) ? $shop : null, $global),
             ];
         }
 
