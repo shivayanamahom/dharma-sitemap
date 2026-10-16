@@ -17,6 +17,10 @@ final class SitemapBuilder
 {
     private const BATCH_SIZE = 500;
     private int $partSize = 45000;
+    /** @var list<string> */
+    private array $excludedUrlPatterns = [];
+    /** @var list<string> */
+    private array $excludedEntities = [];
 
     public function __construct(private readonly DatabaseInterface $db)
     {
@@ -26,6 +30,8 @@ final class SitemapBuilder
     {
         $params = ComponentHelper::getParams('com_dharmasitemap');
         $this->partSize = max(1000, min(50000, (int) $params->get('part_size', 45000)));
+        $this->excludedUrlPatterns = $this->readList((string) $params->get('exclude_url_patterns', ''));
+        $this->excludedEntities = $this->readList((string) $params->get('exclude_entities', ''));
         $this->ensureTables();
         $lockToken = $this->acquireLock();
         $db = $this->db;
@@ -34,12 +40,13 @@ final class SitemapBuilder
             ->values(implode(', ', [$db->quote('building'), $db->quote(gmdate('Y-m-d H:i:s')), (int) Factory::getApplication()->getIdentity()->id])))->execute();
         $buildId = (int) $db->insertid();
 
+        $transactionStarted = false;
         try {
             PluginHelper::importPlugin('dharmasitemap');
             $event = new CollectSourcesEvent('onDharmaSitemapCollectSources', []);
             Factory::getApplication()->getDispatcher()->dispatch('onDharmaSitemapCollectSources', $event);
             $sources = [];
-            foreach ($event->getResult() as $group) {
+            foreach ($event->getArgument('result', []) as $group) {
                 foreach ($group as $source) {
                     if ($source instanceof SitemapSourceInterface) {
                         $sources[] = $source;
@@ -70,11 +77,10 @@ final class SitemapBuilder
                             (string) $params->get('sitemap_base_url', ''),
                             (string) $params->get('tracking_parameters', '')
                         );
-                        if (!$url || !$this->isLocalUrl($url)) {
+                        if (!$url || !$this->isLocalUrl($url) || $this->isExcluded($entry['identity'], $url)) {
                             continue;
                         }
-                        $this->insertUrl($buildId, $source->getId(), $entry['identity'], $url, $entry['lastmod']);
-                        if ($db->getAffectedRows() === 1) {
+                        if ($this->insertUrl($buildId, $source->getId(), $entry['identity'], $url, $entry['lastmod'])) {
                             $count++;
                         } else {
                             $duplicates++;
@@ -93,6 +99,7 @@ final class SitemapBuilder
 
             $output = $this->writeSitemaps($buildId);
             $db->transactionStart();
+            $transactionStarted = true;
             $db->setQuery($db->createQuery()->update($db->quoteName('#__dharmasitemap_state'))
                 ->set($db->quoteName('active_build_id') . ' = ' . $buildId)->where($db->quoteName('id') . ' = 1'))->execute();
             $db->setQuery($db->createQuery()->update($db->quoteName('#__dharmasitemap_builds'))
@@ -103,11 +110,16 @@ final class SitemapBuilder
                 ->set($db->quoteName('report') . ' = ' . $db->quote(json_encode($sourceReport, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)))
                 ->where($db->quoteName('id') . ' = ' . $buildId))->execute();
             $db->transactionCommit();
+            $transactionStarted = false;
 
             return ['build_id' => $buildId, 'url_count' => $total, 'duplicate_count' => $duplicates, 'parts' => $output, 'sources' => $sourceReport];
         } catch (\Throwable $error) {
-            if ($db->transactionDepth()) {
-                $db->transactionRollback();
+            if ($transactionStarted) {
+                try {
+                    $db->transactionRollback();
+                } catch (\Throwable) {
+                    // Preserve the build error if the driver cannot roll back.
+                }
             }
             $db->setQuery($db->createQuery()->update($db->quoteName('#__dharmasitemap_builds'))
                 ->set($db->quoteName('status') . ' = ' . $db->quote('failed'))
@@ -163,21 +175,31 @@ final class SitemapBuilder
         $db->setQuery('UPDATE ' . $db->quoteName('#__dharmasitemap_state') . ' SET lock_token = NULL, lock_until = NULL WHERE id = 1 AND lock_token = ' . $db->quote($token))->execute();
     }
 
-    private function insertUrl(int $buildId, string $source, string $identity, string $url, ?string $lastmod): void
+    private function insertUrl(int $buildId, string $source, string $identity, string $url, ?string $lastmod): bool
     {
         $db = $this->db;
+        $urlHash = hash('sha256', $url);
+        $existing = $db->createQuery()->select('1')->from($db->quoteName('#__dharmasitemap_urls'))
+            ->where($db->quoteName('build_id') . ' = ' . $buildId)
+            ->where('(' . $db->quoteName('url_hash') . ' = ' . $db->quote($urlHash)
+                . ' OR ' . $db->quoteName('identity_key') . ' = ' . $db->quote($identity) . ')');
+        if ($db->setQuery($existing, 0, 1)->loadResult()) {
+            return false;
+        }
+
         $query = $db->createQuery()->insert($db->quoteName('#__dharmasitemap_urls'))
             ->columns($db->quoteName(['build_id', 'url_hash', 'url', 'source_id', 'identity_key', 'lastmod']))
             ->values(implode(', ', [
                 $buildId,
-                $db->quote(hash('sha256', $url)),
+                $db->quote($urlHash),
                 $db->quote($url),
                 $db->quote($source),
                 $db->quote($identity),
                 $lastmod ? $db->quote(gmdate('Y-m-d H:i:s', strtotime($lastmod))) : 'NULL',
             ]));
-        $sql = preg_replace('/^INSERT INTO/i', 'INSERT IGNORE INTO', (string) $query, 1);
-        $db->setQuery($sql)->execute();
+        $db->setQuery($query)->execute();
+
+        return true;
     }
 
     private function isLocalUrl(string $url): bool
@@ -185,6 +207,32 @@ final class SitemapBuilder
         $siteHost = parse_url(\Joomla\CMS\Uri\Uri::root(), PHP_URL_HOST);
         $urlHost = parse_url($url, PHP_URL_HOST);
         return $siteHost && $urlHost && strcasecmp((string) $siteHost, (string) $urlHost) === 0;
+    }
+
+    /** @return list<string> */
+    private function readList(string $value): array
+    {
+        return array_values(array_filter(array_map('trim', preg_split('/[\r\n,]+/', $value) ?: []), static fn (string $item): bool => $item !== '' && !str_starts_with($item, '#')));
+    }
+
+    private function isExcluded(string $identity, string $url): bool
+    {
+        $identityParts = explode(':', $identity, 3);
+        $entityKey = count($identityParts) > 1 ? $identityParts[0] . ':' . $identityParts[1] : $identity;
+        if (in_array($entityKey, $this->excludedEntities, true)) {
+            return true;
+        }
+
+        $path = (string) parse_url($url, PHP_URL_PATH);
+        foreach ($this->excludedUrlPatterns as $pattern) {
+            $pattern = str_starts_with($pattern, '/') ? $pattern : '/' . $pattern;
+            $regex = '~^' . str_replace(['\\*', '\\?'], ['.*', '.'], preg_quote($pattern, '~')) . '$~u';
+            if (preg_match($regex, $path) === 1) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function writeSitemaps(int $buildId): int
@@ -227,13 +275,65 @@ final class SitemapBuilder
         $handle = fopen($indexPath . '.tmp', 'wb');
         fwrite($handle, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<sitemapindex xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
         for ($part = 1; $part <= $parts; $part++) {
-            $loc = htmlspecialchars($base . '/index.php?option=com_dharmasitemap&view=sitemap&part=' . $part . '&build=' . $buildId, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+            $loc = htmlspecialchars($base . '/index.php?option=com_dharmasitemap&view=sitemap&format=xml&part=' . $part . '&build=' . $buildId, ENT_XML1 | ENT_QUOTES, 'UTF-8');
             fwrite($handle, "<sitemap><loc>{$loc}</loc></sitemap>\n");
         }
         fwrite($handle, "</sitemapindex>\n");
         fclose($handle);
         rename($indexPath . '.tmp', $indexPath);
 
+        $this->publishStaticFiles($buildId, $parts, $base, $directory);
+
         return $parts;
+    }
+
+    private function publishStaticFiles(int $buildId, int $parts, string $base, string $cacheDirectory): void
+    {
+        $root = rtrim(JPATH_ROOT, '/\\');
+        $indexPath = $root . '/sitemap.xml';
+        $marker = '<!-- Generated by Dharma Sitemap -->';
+        if (is_link($indexPath)) {
+            throw new \RuntimeException('Файл sitemap.xml является символической ссылкой; безопасная публикация остановлена.');
+        }
+        if (is_file($indexPath)) {
+            $existingHeader = file_get_contents($indexPath, false, null, 0, 512);
+            if ($existingHeader === false || !str_contains($existingHeader, $marker)) {
+                throw new \RuntimeException('В корне уже есть чужой sitemap.xml. Компонент не будет его перезаписывать.');
+            }
+        }
+
+        $locations = [];
+        for ($part = 1; $part <= $parts; $part++) {
+            $filename = 'sitemap-' . $buildId . '-' . $part . '.xml';
+            $target = $root . '/' . $filename;
+            if (is_link($target) || file_exists($target)) {
+                throw new \RuntimeException('Целевой файл карты уже существует; безопасная публикация остановлена: ' . $filename);
+            }
+            $source = $cacheDirectory . '/sitemap-' . $part . '.xml';
+            $temporary = tempnam($root, '.dharmasitemap-part-');
+            if ($temporary === false || !copy($source, $temporary) || !chmod($temporary, 0644) || !rename($temporary, $target)) {
+                if (is_string($temporary) && is_file($temporary)) {
+                    unlink($temporary);
+                }
+                throw new \RuntimeException('Не удалось опубликовать статическую часть карты: ' . $filename);
+            }
+            $locations[] = rtrim($base, '/') . '/' . $filename;
+        }
+
+        $xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" . $marker . "\n";
+        $xml .= "<sitemapindex xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
+        foreach ($locations as $location) {
+            $xml .= '<sitemap><loc>' . htmlspecialchars($location, ENT_XML1 | ENT_QUOTES, 'UTF-8') . "</loc></sitemap>\n";
+        }
+        $xml .= "</sitemapindex>\n";
+
+        $temporaryIndex = tempnam($root, '.dharmasitemap-index-');
+        if ($temporaryIndex === false || file_put_contents($temporaryIndex, $xml, LOCK_EX) !== strlen($xml)
+            || !chmod($temporaryIndex, 0644) || !rename($temporaryIndex, $indexPath)) {
+            if (is_string($temporaryIndex) && is_file($temporaryIndex)) {
+                unlink($temporaryIndex);
+            }
+            throw new \RuntimeException('Не удалось атомарно опубликовать статический файл sitemap.xml.');
+        }
     }
 }

@@ -1,14 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <config>
-    <fieldset name="basic">
+    <fieldset name="general" label="COM_DHARMASITEMAP_CONFIG_GENERAL">
         <field name="sitemap_base_url" type="url" label="COM_DHARMASITEMAP_FIELD_BASE_URL" description="COM_DHARMASITEMAP_FIELD_BASE_URL_DESC" filter="url" />
         <field name="tracking_parameters" type="textarea" rows="3" label="COM_DHARMASITEMAP_FIELD_TRACKING" description="COM_DHARMASITEMAP_FIELD_TRACKING_DESC" default="utm_*, fbclid, gclid, yclid, dclid, msclkid, ref, source" filter="string" />
         <field name="part_size" type="number" label="COM_DHARMASITEMAP_FIELD_PART_SIZE" description="COM_DHARMASITEMAP_FIELD_PART_SIZE_DESC" default="45000" min="1000" max="50000" filter="integer" />
+    </fieldset>
+    <fieldset name="sources" label="COM_DHARMASITEMAP_CONFIG_SOURCES">
         <field name="include_content" type="radio" label="COM_DHARMASITEMAP_FIELD_INCLUDE_CONTENT" default="1" class="btn-group btn-group-yesno"><option value="1">JYES</option><option value="0">JNO</option></field>
         <field name="include_contacts" type="radio" label="COM_DHARMASITEMAP_FIELD_INCLUDE_CONTACTS" default="1" class="btn-group btn-group-yesno"><option value="1">JYES</option><option value="0">JNO</option></field>
         <field name="include_newsfeeds" type="radio" label="COM_DHARMASITEMAP_FIELD_INCLUDE_NEWSFEEDS" default="1" class="btn-group btn-group-yesno"><option value="1">JYES</option><option value="0">JNO</option></field>
         <field name="include_tags" type="radio" label="COM_DHARMASITEMAP_FIELD_INCLUDE_TAGS" default="1" class="btn-group btn-group-yesno"><option value="1">JYES</option><option value="0">JNO</option></field>
         <field name="include_dharmashop_products" type="radio" label="COM_DHARMASITEMAP_FIELD_INCLUDE_DHARMASHOP_PRODUCTS" default="1" class="btn-group btn-group-yesno"><option value="1">JYES</option><option value="0">JNO</option></field>
         <field name="include_dharmashop_categories" type="radio" label="COM_DHARMASITEMAP_FIELD_INCLUDE_DHARMASHOP_CATEGORIES" default="1" class="btn-group btn-group-yesno"><option value="1">JYES</option><option value="0">JNO</option></field>
+    </fieldset>
+    <fieldset name="exclusions" label="COM_DHARMASITEMAP_CONFIG_EXCLUSIONS">
+        <field name="exclude_url_patterns" type="textarea" rows="7" label="COM_DHARMASITEMAP_FIELD_EXCLUDE_URLS" description="COM_DHARMASITEMAP_FIELD_EXCLUDE_URLS_DESC" filter="string" />
+        <field name="exclude_entities" type="textarea" rows="7" label="COM_DHARMASITEMAP_FIELD_EXCLUDE_ENTITIES" description="COM_DHARMASITEMAP_FIELD_EXCLUDE_ENTITIES_DESC" filter="string" />
     </fieldset>
 </config>

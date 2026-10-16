@@ -13,6 +13,7 @@ use Joomla\DI\ServiceProviderInterface;
 return new class () implements ServiceProviderInterface {
     public function register(Container $container): void
     {
+        \JLoader::registerNamespace('Dharma\\Plugin\\DharmaSitemap\\DharmaShop', dirname(__DIR__) . '/src');
         $container->set(PluginInterface::class, static function (): DharmaShop {
             $plugin = new DharmaShop((array) PluginHelper::getPlugin('dharmasitemap', 'dharmashop'));
             $plugin->setApplication(Factory::getApplication());

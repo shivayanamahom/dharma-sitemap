@@ -7,6 +7,7 @@
 - `plugins/plg_dharmasitemap_dharmashop` — необязательная интеграция с магазином.
 - `plugins/plg_system_dharmasitemap` — публичный endpoint.
 - `plugins/plg_task_dharmasitemap` — задача Joomla Scheduler.
+- `plugins/plg_console_dharmasitemap` — команда Joomla Console/CLI `dharmasitemap:build`.
 - `build.sh` — сборка вложенных расширений и общего пакета.
 
 ## Source API

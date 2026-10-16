@@ -38,13 +38,14 @@ build_plugin "$PROJECT_ROOT/plugins/plg_dharmasitemap_core" plg_dharmasitemap_co
 build_plugin "$PROJECT_ROOT/plugins/plg_dharmasitemap_dharmashop" plg_dharmasitemap_dharmashop dharmasitemap.xml
 build_plugin "$PROJECT_ROOT/plugins/plg_system_dharmasitemap" plg_system_dharmasitemap dharmasitemap.xml
 build_plugin "$PROJECT_ROOT/plugins/plg_task_dharmasitemap" plg_task_dharmasitemap dharmasitemap.xml
+build_plugin "$PROJECT_ROOT/plugins/plg_console_dharmasitemap" plg_console_dharmasitemap dharmasitemap.xml
 
 PACKAGE_STAGE="$BUILD_ROOT/package-root"
 mkdir -p "$PACKAGE_STAGE/language/ru-RU" "$PACKAGE_STAGE/language/en-GB"
 cp "$PROJECT_ROOT/pkg_dharmasitemap.xml" "$PACKAGE_STAGE/"
 cp "$PROJECT_ROOT/language/ru-RU/pkg_dharmasitemap.sys.ini" "$PACKAGE_STAGE/language/ru-RU/"
 cp "$PROJECT_ROOT/language/en-GB/pkg_dharmasitemap.sys.ini" "$PACKAGE_STAGE/language/en-GB/"
-cp "$DIST_ROOT/com_dharmasitemap.zip" "$DIST_ROOT/plg_dharmasitemap_core.zip" "$DIST_ROOT/plg_dharmasitemap_dharmashop.zip" "$DIST_ROOT/plg_system_dharmasitemap.zip" "$DIST_ROOT/plg_task_dharmasitemap.zip" "$PACKAGE_STAGE/"
+cp "$DIST_ROOT/com_dharmasitemap.zip" "$DIST_ROOT/plg_dharmasitemap_core.zip" "$DIST_ROOT/plg_dharmasitemap_dharmashop.zip" "$DIST_ROOT/plg_system_dharmasitemap.zip" "$DIST_ROOT/plg_task_dharmasitemap.zip" "$DIST_ROOT/plg_console_dharmasitemap.zip" "$PACKAGE_STAGE/"
 sed -i.bak -E "s#<version>[^<]+</version>#<version>$DHARMA_SITEMAP_VERSION</version>#g" "$PACKAGE_STAGE/pkg_dharmasitemap.xml"
 rm -f "$PACKAGE_STAGE/pkg_dharmasitemap.xml.bak"
 (cd "$PACKAGE_STAGE" && zip -qr "$DIST_ROOT/pkg_dharmasitemap-$DHARMA_SITEMAP_VERSION.zip" .)

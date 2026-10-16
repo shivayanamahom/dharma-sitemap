@@ -53,12 +53,13 @@ final class CoreSource implements SitemapSourceInterface
             'content_categories' => $this->categoryQuery('com_content'),
             'contacts' => $this->entityQuery('#__contact_details', 'com_contact', 'contact', 'id, catid, alias, modified, language', 'state = 1'),
             'contact_categories' => $this->categoryQuery('com_contact'),
-            'newsfeeds' => $this->entityQuery('#__newsfeeds', 'com_newsfeeds', 'newsfeed', 'id, catid, alias, modified, language', 'published = 1'),
+            'newsfeeds' => $this->entityQuery('#__newsfeeds', 'com_newsfeeds', 'newsfeed', 'id, catid, alias, modified, language', 'x.published = 1'),
             'newsfeed_categories' => $this->categoryQuery('com_newsfeeds'),
             'tags' => $this->tagQuery(),
             default => throw new \RuntimeException('Неизвестный источник Joomla.'),
         };
-        $query->where('x.id > :afterId')->bind(':afterId', $afterId ?? 0, ParameterType::INTEGER)->order('x.id ASC');
+        $afterIdValue = $afterId ?? 0;
+        $query->where('x.id > :afterId')->bind(':afterId', $afterIdValue, ParameterType::INTEGER)->order('x.id ASC');
         $rows = $this->db->setQuery($query, 0, $limit)->loadObjectList();
         $entries = [];
         foreach ($rows as $row) {
@@ -95,7 +96,7 @@ final class CoreSource implements SitemapSourceInterface
     private function entityQuery(string $table, string $extension, string $view, string $columns, string $filter): object
     {
         $db = $this->db;
-        $select = array_map('trim', explode(',', $columns));
+        $select = array_map(static fn (string $column): string => 'x.' . trim($column), explode(',', $columns));
         $select[] = $db->quote($view) . ' AS route';
         return $db->createQuery()->select($select)->from($db->quoteName($table, 'x'))
             ->join('INNER', $db->quoteName('#__categories', 'c') . ' ON c.id = x.catid AND c.extension = ' . $db->quote($extension))

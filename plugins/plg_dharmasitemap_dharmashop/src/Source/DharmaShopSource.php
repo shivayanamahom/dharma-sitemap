@@ -32,19 +32,20 @@ final class DharmaShopSource implements SitemapSourceInterface
     public function fetchBatch(?int $afterId, int $limit): array
     {
         $db = $this->db;
+        $afterIdValue = $afterId ?? 0;
         if ($this->kind === 'products') {
             $query = $db->createQuery()->select(['p.id', 'p.catid', 'p.modified', 'p.alias'])
                 ->from($db->quoteName('#__dharmashop_products', 'p'))
                 ->join('INNER', $db->quoteName('#__categories', 'c') . ' ON c.id = p.catid AND c.extension = ' . $db->quote('com_dharmashop'))
                 ->where('p.state = 1')->where('p.id > :afterId')->where('c.published = 1')->where('c.access = 1')
                 ->where('NOT EXISTS (SELECT 1 FROM ' . $db->quoteName('#__categories', 'a') . ' WHERE a.extension = ' . $db->quote('com_dharmashop') . ' AND a.lft <= c.lft AND a.rgt >= c.rgt AND (a.published <> 1 OR a.access <> 1))')
-                ->order('p.id ASC')->bind(':afterId', $afterId ?? 0, ParameterType::INTEGER);
+                ->order('p.id ASC')->bind(':afterId', $afterIdValue, ParameterType::INTEGER);
         } else {
             $query = $db->createQuery()->select(['c.id', 'c.alias', 'c.modified_time AS modified', 'c.language'])
                 ->from($db->quoteName('#__categories', 'c'))->where('c.extension = ' . $db->quote('com_dharmashop'))
                 ->where('c.id > 1')->where('c.id > :afterId')->where('c.published = 1')->where('c.access = 1')
                 ->where('NOT EXISTS (SELECT 1 FROM ' . $db->quoteName('#__categories', 'a') . ' WHERE a.extension = ' . $db->quote('com_dharmashop') . ' AND a.lft < c.lft AND a.rgt > c.rgt AND (a.published <> 1 OR a.access <> 1))')
-                ->order('c.id ASC')->bind(':afterId', $afterId ?? 0, ParameterType::INTEGER);
+                ->order('c.id ASC')->bind(':afterId', $afterIdValue, ParameterType::INTEGER);
         }
 
         $rows = $db->setQuery($query, 0, $limit)->loadObjectList();
