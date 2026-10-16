@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="component" method="upgrade">
+    <name>COM_DHARMASITEMAP</name>
+    <author>Dharma</author>
+    <creationDate>2026-10</creationDate>
+    <copyright>(C) 2026 Dharma</copyright>
+    <license>GNU General Public License version 2 or later</license>
+    <version>0.1.0</version>
+    <description>COM_DHARMASITEMAP_XML_DESCRIPTION</description>
+    <element>com_dharmasitemap</element>
+    <namespace path="src">Dharma\Component\DharmaSitemap</namespace>
+    <scriptfile>admin/script.php</scriptfile>
+    <install>
+        <sql>
+            <file driver="mysql" charset="utf8">admin/sql/install.mysql.utf8.sql</file>
+        </sql>
+    </install>
+    <uninstall>
+        <sql>
+            <file driver="mysql" charset="utf8">admin/sql/uninstall.mysql.utf8.sql</file>
+        </sql>
+    </uninstall>
+    <administration>
+        <menu>COM_DHARMASITEMAP_TITLE</menu>
+        <files folder="admin">
+            <filename>access.xml</filename>
+            <filename>config.xml</filename>
+            <folder>services</folder>
+            <folder>src</folder>
+            <folder>sql</folder>
+            <folder>language</folder>
+        </files>
+        <languages folder="admin/language">
+            <language tag="ru-RU">ru-RU/com_dharmasitemap.ini</language>
+            <language tag="ru-RU">ru-RU/com_dharmasitemap.sys.ini</language>
+            <language tag="en-GB">en-GB/com_dharmasitemap.ini</language>
+            <language tag="en-GB">en-GB/com_dharmasitemap.sys.ini</language>
+        </languages>
+    </administration>
+    <files folder="site">
+        <folder>src</folder>
+    </files>
+    <languages folder="language">
+        <language tag="ru-RU">ru-RU/com_dharmasitemap.ini</language>
+        <language tag="en-GB">en-GB/com_dharmasitemap.ini</language>
+    </languages>
+</extension>

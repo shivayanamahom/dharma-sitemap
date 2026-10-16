@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" group="dharmasitemap" method="upgrade">
+    <name>PLG_DHARMASITEMAP_CORE</name>
+    <author>Dharma</author>
+    <creationDate>2026-10</creationDate>
+    <copyright>(C) 2026 Dharma</copyright>
+    <license>GNU General Public License version 2 or later</license>
+    <version>0.1.0</version>
+    <description>PLG_DHARMASITEMAP_CORE_XML_DESCRIPTION</description>
+    <namespace path="src">Dharma\Plugin\DharmaSitemap\Core</namespace>
+    <files>
+        <folder plugin="core">services</folder>
+        <folder>src</folder>
+    </files>
+    <languages>
+        <language tag="ru-RU">language/ru-RU/plg_dharmasitemap_core.ini</language>
+        <language tag="ru-RU">language/ru-RU/plg_dharmasitemap_core.sys.ini</language>
+        <language tag="en-GB">language/en-GB/plg_dharmasitemap_core.ini</language>
+        <language tag="en-GB">language/en-GB/plg_dharmasitemap_core.sys.ini</language>
+    </languages>
+</extension>

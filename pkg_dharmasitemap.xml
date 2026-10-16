@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="package" method="upgrade">
+    <name>PKG_DHARMASITEMAP</name>
+    <packagename>dharmasitemap</packagename>
+    <creationDate>2026-10</creationDate>
+    <author>Dharma</author>
+    <copyright>(C) 2026 Dharma</copyright>
+    <license>GNU General Public License version 2 or later</license>
+    <version>0.1.0</version>
+    <description>PKG_DHARMASITEMAP_XML_DESCRIPTION</description>
+    <files>
+        <file type="component" id="com_dharmasitemap">com_dharmasitemap.zip</file>
+        <file type="plugin" id="core" group="dharmasitemap">plg_dharmasitemap_core.zip</file>
+        <file type="plugin" id="dharmashop" group="dharmasitemap">plg_dharmasitemap_dharmashop.zip</file>
+        <file type="plugin" id="dharmasitemap" group="system">plg_system_dharmasitemap.zip</file>
+        <file type="plugin" id="dharmasitemap" group="task">plg_task_dharmasitemap.zip</file>
+    </files>
+    <languages folder="language">
+        <language tag="ru-RU">ru-RU/pkg_dharmasitemap.sys.ini</language>
+        <language tag="en-GB">en-GB/pkg_dharmasitemap.sys.ini</language>
+    </languages>
+    <updateservers>
+        <server type="extension" priority="1" name="Dharma Sitemap">https://raw.githubusercontent.com/shivayanamahom/dharma-sitemap/main/updates.xml</server>
+    </updateservers>
+</extension>
