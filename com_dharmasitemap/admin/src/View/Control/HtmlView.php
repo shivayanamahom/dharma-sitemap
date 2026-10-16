@@ -44,7 +44,7 @@ final class HtmlView extends BaseHtmlView
 
         $component = ComponentHelper::getComponent('com_dharmasitemap');
         $this->form->addControlField('task', 'component.save');
-        $this->form->addControlField('id', (int) $component->id);
+        $this->form->addControlField('id', (string) $component->id);
         $this->form->addControlField('component', 'com_dharmasitemap');
         $this->form->addControlField('return', base64_encode('index.php?option=com_dharmasitemap#settings'));
 
