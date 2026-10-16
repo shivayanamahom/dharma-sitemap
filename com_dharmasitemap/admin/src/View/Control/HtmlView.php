@@ -5,7 +5,10 @@ namespace Dharma\Component\DharmaSitemap\Administrator\View\Control;
 
 use Dharma\Component\DharmaSitemap\Administrator\Service\SitemapBuilder;
 use Joomla\CMS\Factory;
+use Joomla\CMS\Component\ComponentHelper;
+use Joomla\CMS\Form\Form;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
+use Joomla\CMS\Table\Asset;
 use Joomla\Database\DatabaseInterface;
 
 \defined('_JEXEC') or die;
@@ -13,10 +16,38 @@ use Joomla\Database\DatabaseInterface;
 final class HtmlView extends BaseHtmlView
 {
     public ?object $activeBuild = null;
+    public ?Form $form = null;
 
     public function display($tpl = null): void
     {
-        $this->activeBuild = (new SitemapBuilder(Factory::getContainer()->get(DatabaseInterface::class)))->getActiveBuild();
+        $container = Factory::getContainer();
+        $db = $container->get(DatabaseInterface::class);
+        $this->activeBuild = (new SitemapBuilder($db))->getActiveBuild();
+
+        Form::addFormPath(JPATH_ADMINISTRATOR . '/components/com_dharmasitemap');
+        $this->form = Form::getInstance(
+            'com_dharmasitemap.settings',
+            'config',
+            ['control' => 'jform', 'load_data' => false],
+            false,
+            '/config'
+        );
+
+        $data = ComponentHelper::getParams('com_dharmasitemap')->toArray();
+        if (Factory::getApplication()->getIdentity()->authorise('core.admin', 'com_dharmasitemap')) {
+            $asset = new Asset($db);
+            if ($asset->loadByName('com_dharmasitemap')) {
+                $data['rules'] = $asset->rules;
+            }
+        }
+        $this->form->bind($data);
+
+        $component = ComponentHelper::getComponent('com_dharmasitemap');
+        $this->form->addControlField('task', 'component.save');
+        $this->form->addControlField('id', (int) $component->id);
+        $this->form->addControlField('component', 'com_dharmasitemap');
+        $this->form->addControlField('return', base64_encode('index.php?option=com_dharmasitemap#settings'));
+
         parent::display($tpl);
     }
 }

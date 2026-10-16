@@ -17,4 +17,7 @@
         <field name="exclude_url_patterns" type="textarea" rows="7" label="COM_DHARMASITEMAP_FIELD_EXCLUDE_URLS" description="COM_DHARMASITEMAP_FIELD_EXCLUDE_URLS_DESC" filter="string" />
         <field name="exclude_entities" type="textarea" rows="7" label="COM_DHARMASITEMAP_FIELD_EXCLUDE_ENTITIES" description="COM_DHARMASITEMAP_FIELD_EXCLUDE_ENTITIES_DESC" filter="string" />
     </fieldset>
+    <fieldset name="permissions" label="COM_DHARMASITEMAP_TAB_PERMISSIONS">
+        <field name="rules" type="rules" component="com_dharmasitemap" section="component" label="JCONFIG_PERMISSIONS_LABEL" filter="rules" />
+    </fieldset>
 </config>
