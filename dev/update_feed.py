@@ -22,13 +22,17 @@ def main() -> None:
         ("element", "pkg_dharmasitemap"),
         ("type", "package"),
         ("version", args.version),
-        ("client", "administrator"),
+        # У пакетов в таблице extensions client_id = 0 («site»); с «administrator» Joomla не находит установленное расширение и обновление не показывает.
+        ("client", "site"),
     ):
         ET.SubElement(update, name).text = value
     downloads = ET.SubElement(update, "downloads")
     download = ET.SubElement(downloads, "downloadurl", {"type": "full", "format": "zip"})
     download.text = f"https://github.com/shivayanamahom/dharma-sitemap/releases/download/{args.tag}/{args.archive}"
+    ET.SubElement(update, "infourl", {"title": f"Dharma Sitemap {args.version}"}).text = f"https://github.com/shivayanamahom/dharma-sitemap/releases/tag/{args.tag}"
     ET.SubElement(update, "sha256").text = args.sha256
+    ET.SubElement(ET.SubElement(update, "tags"), "tag").text = "stable"
+    ET.SubElement(update, "maintainer").text = "Dharma"
     ET.SubElement(update, "php_minimum").text = "8.3"
     ET.SubElement(update, "targetplatform", {"name": "joomla", "version": "6\\.[0-9]+"})
     ET.indent(root, space="    ")
