@@ -28,6 +28,7 @@
             <folder>services</folder>
             <folder>src</folder>
             <folder>sql</folder>
+            <folder>tmpl</folder>
             <folder>language</folder>
         </files>
         <languages folder="admin/language">
