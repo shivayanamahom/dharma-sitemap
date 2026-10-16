@@ -53,12 +53,47 @@ $canManagePermissions = $identity->authorise('core.admin', 'com_dharmasitemap');
                             <dt class="col-sm-3"><?php echo Text::_('COM_DHARMASITEMAP_FIELD_DUPLICATES'); ?></dt><dd class="col-sm-9"><?php echo (int) $this->activeBuild->duplicate_count; ?></dd>
                             <dt class="col-sm-3"><?php echo Text::_('COM_DHARMASITEMAP_FIELD_ENDPOINT'); ?></dt><dd class="col-sm-9"><a href="<?php echo $escape($sitemapUrl); ?>" target="_blank" rel="noopener"><?php echo $escape($sitemapUrl); ?></a></dd>
                         </dl>
+                        <?php if (!empty($this->report['excluded']['noindex'])) : ?>
+                            <div class="alert alert-warning mt-3 mb-0"><?php echo $escape(Text::sprintf('COM_DHARMASITEMAP_NOINDEX_WARNING', (int) $this->report['excluded']['noindex'])); ?></div>
+                        <?php endif; ?>
+                        <p class="text-muted small mt-3 mb-0"><?php echo $escape(Text::sprintf('COM_DHARMASITEMAP_ROBOTS_TXT_HINT', $sitemapUrl)); ?></p>
                     <?php else : ?>
                         <p class="mb-0"><?php echo Text::_('COM_DHARMASITEMAP_NO_BUILD'); ?></p>
                     <?php endif; ?>
                 </div>
             </div>
         </div>
+        <?php if ($this->report['sources']) : ?>
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="h4"><?php echo Text::_('COM_DHARMASITEMAP_REPORT'); ?></h2>
+                    <table class="table table-sm mb-0">
+                        <thead><tr>
+                            <th><?php echo Text::_('COM_DHARMASITEMAP_REPORT_SOURCE'); ?></th>
+                            <th class="text-end"><?php echo Text::_('COM_DHARMASITEMAP_REPORT_COUNT'); ?></th>
+                            <th><?php echo Text::_('COM_DHARMASITEMAP_REPORT_EXCLUDED'); ?></th>
+                        </tr></thead>
+                        <tbody>
+                        <?php foreach ($this->report['sources'] as $row) : ?>
+                            <?php
+                            $notes = [];
+                            foreach ((array) ($row['excluded'] ?? []) as $reason => $number) {
+                                $notes[] = Text::_('COM_DHARMASITEMAP_REASON_' . strtoupper((string) $reason)) . ': ' . (int) $number;
+                            }
+                            ?>
+                            <tr>
+                                <td><?php echo $escape($row['source'] ?? ''); ?></td>
+                                <td class="text-end"><?php echo (int) ($row['count'] ?? 0); ?></td>
+                                <td class="text-muted"><?php echo ($row['status'] ?? '') === 'unavailable' ? $escape(Text::_('COM_DHARMASITEMAP_REPORT_UNAVAILABLE')) : $escape(implode(', ', $notes)); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
         <div class="col-12">
             <div class="card">
                 <div class="card-body d-flex flex-wrap gap-2">

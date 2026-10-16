@@ -36,6 +36,10 @@ final class BuildSitemapCommand extends AbstractCommand
                 $result['duplicate_count']
             ));
 
+            foreach ($result['sources'] as $source) {
+                $io->writeln(sprintf('  %-45s %d%s', $source['source'], $source['count'], $source['excluded'] ? '  (исключено: ' . json_encode($source['excluded'], JSON_UNESCAPED_UNICODE) . ')' : ''));
+            }
+
             return 0;
         } catch (\Throwable $error) {
             $io->error('Сборка не опубликована: ' . $error->getMessage());

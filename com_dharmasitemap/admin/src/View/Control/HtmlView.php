@@ -17,12 +17,15 @@ final class HtmlView extends BaseHtmlView
 {
     public ?object $activeBuild = null;
     public ?Form $form = null;
+    /** @var array{sources: list<array<string, mixed>>, excluded: array<string, int>} */
+    public array $report = ['sources' => [], 'excluded' => []];
 
     public function display($tpl = null): void
     {
         $container = Factory::getContainer();
         $db = $container->get(DatabaseInterface::class);
         $this->activeBuild = (new SitemapBuilder($db))->getActiveBuild();
+        $this->report = SitemapBuilder::readReport($this->activeBuild);
 
         Form::addFormPath(JPATH_ADMINISTRATOR . '/components/com_dharmasitemap');
         $this->form = Form::getInstance(

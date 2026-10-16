@@ -5,10 +5,10 @@ namespace Dharma\Plugin\DharmaSitemap\Core\Extension;
 
 use Dharma\Component\DharmaSitemap\Administrator\Event\CollectSourcesEvent;
 use Dharma\Plugin\DharmaSitemap\Core\Source\CoreSource;
+use Dharma\Plugin\DharmaSitemap\Core\Source\MenuSource;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Plugin\CMSPlugin;
-use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\Event\SubscriberInterface;
 use Joomla\Database\DatabaseInterface;
 
@@ -42,6 +42,9 @@ final class Core extends CMSPlugin implements SubscriberInterface
         }
         if ($params->get('include_tags', 1)) {
             $sources[] = new CoreSource($db, 'tags');
+        }
+        if ($params->get('include_menu', 1)) {
+            $sources[] = new MenuSource($db);
         }
         $event->addResult($sources);
     }

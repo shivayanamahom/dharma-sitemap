@@ -18,6 +18,10 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
+      - name: Check
+        run: |
+          python3 dev/check_languages.py
+          php tests/run.php
       - name: Build package
         env:
           DHARMA_SITEMAP_VERSION: ${{ github.ref_name }}

@@ -18,12 +18,12 @@
 $event->addResult([$source]);
 ```
 
-Источник реализует `getId()`, `getTitle()`, `isAvailable()` и `fetchBatch(?int $afterId, int $limit)`. Порция имеет вид:
+Источник реализует `getId()`, `getTitle()`, `getPriority()`, `isAvailable()` и `fetchBatch(?int $afterId, int $limit)`. Источники обходятся по возрастанию `getPriority()`, затем по `getId()`; при совпадении адреса остаётся запись источника, который шёл раньше (источники сущностей — 10 и 20, пункты меню — 90). Порция имеет вид:
 
 ```php
 [
     'entries' => [
-        ['url' => 'https://example.com/page', 'lastmod' => '2026-10-01 12:00:00', 'identity' => 'provider:type:id:language'],
+        ['url' => 'https://example.com/page', 'lastmod' => '2026-10-01 12:00:00', 'identity' => 'provider:type:id:language', 'robots' => 'index, follow'],
     ],
     'next_cursor' => 123,
 ]
@@ -31,13 +31,26 @@ $event->addResult([$source]);
 
 Верните `next_cursor = null`, когда записей больше нет. Используйте keyset-пагинацию по стабильному ID, фильтруйте публикацию и публичный ACL в запросе источника, ограничивайте URL страницами без POST/сессионных данных. Исключения источника останавливают и отклоняют сборку; предыдущая успешная карта остаётся активной.
 
+`robots` — итоговое значение robots страницы (запись → пункт меню → настройки) или `null`, если оно неизвестно; записи с `noindex` координатор отбрасывает при включённой настройке. Для расчёта используйте `RobotsPolicy::effective()`, `RobotsPolicy::fromMetadata()` и `MenuRobotsIndex::lookup()`. Для условия доступа берите `PublicAccess::list()` — уровни гостя, а не константу.
+
+Адрес страницы стройте штатным `Route::link('site', …)` так же, как это делает сама страница для canonical: без лишних параметров (для категории — только `id`).
+
 Глобальный нормализатор оставляет только локальные HTTP(S) адреса, удаляет fragment и tracking query, нормализует путь и порядок оставшихся query-параметров. Уникальные индексы БД по URL и identity защищают от дублей даже при повторных курсорах.
+
+## Проверки
+
+```sh
+php tests/run.php               # логика без Joomla: robots, нормализация URL, исключения, публикация файлов, очистка
+python3 dev/check_languages.py  # ключи ru-RU и en-GB совпадают, используемые ключи существуют
+```
+
+Запросы источников и маршруты проверяйте на тестовом сайте: соберите карту и сверьте выборку адресов с кодами ответа и canonical страниц. GitHub Actions (`ci.yml`) на каждый push и pull request проверяет синтаксис PHP, манифесты, языки, тесты и сборку пакета.
 
 ## Локальная сборка
 
 ```sh
 ./build.sh
-unzip -tqq dist/pkg_dharmasitemap-0.1.0.zip
+unzip -tqq dist/pkg_dharmasitemap-$(cat VERSION).zip
 ```
 
 GitHub Actions запускается на теге `v*`: собирает пакет, вычисляет SHA-256, создаёт GitHub Release и обновляет публичный `updates.xml`. Версию повышайте только при подготовке релиза; версии всех вложенных расширений берутся из `VERSION` во время сборки.

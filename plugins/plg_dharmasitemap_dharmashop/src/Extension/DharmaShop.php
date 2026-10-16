@@ -29,6 +29,15 @@ final class DharmaShop extends CMSPlugin implements SubscriberInterface
         if ($params->get('include_dharmashop_categories', 1)) {
             $sources[] = new DharmaShopSource($db, 'categories');
         }
+        if ($params->get('include_dharmashop_brands', 1)) {
+            $sources[] = new DharmaShopSource($db, 'brands');
+        }
+        if ($params->get('include_dharmashop_badges', 1)) {
+            $sources[] = new DharmaShopSource($db, 'badges');
+        }
+        if ($params->get('include_dharmashop_landings', 1)) {
+            $sources[] = new DharmaShopSource($db, 'landings');
+        }
         $event->addResult($sources);
     }
 }
