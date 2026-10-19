@@ -87,6 +87,26 @@ function clearRoot(): void
     }
 }
 
+// ---------------------------------------------------------------- статическая защита от известных ошибок
+// Методы настройки команд Joomla Console (setDescription, setHelp, addArgument…) возвращают void: цепочка `->` вызывает фатальную
+// ошибку во всех командах `php cli/joomla.php`, пока плагин включён.
+$chained = [];
+$files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS));
+
+foreach ($files as $file) {
+    $path = $file->getPathname();
+
+    if (!str_ends_with($path, '.php') || preg_match('~/(build|dist|\.git|tests)/~', $path)) {
+        continue;
+    }
+
+    if (preg_match('/\$this->(setDescription|setHelp|setAliases|setHidden)\([^;]*\)\s*->/s', (string) file_get_contents($path))) {
+        $chained[] = substr($path, strlen($root) + 1);
+    }
+}
+
+check('no chained calls on void Console command setters', $chained, []);
+
 // ---------------------------------------------------------------- RobotsPolicy
 check('noindex plain', RobotsPolicy::isNoindex('noindex'), true);
 check('noindex with follow', RobotsPolicy::isNoindex('noindex, follow'), true);

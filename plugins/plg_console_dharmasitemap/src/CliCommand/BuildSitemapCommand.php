@@ -19,8 +19,9 @@ final class BuildSitemapCommand extends AbstractCommand
 
     protected function configure(): void
     {
-        $this->setDescription('Собрать и опубликовать XML-карту сайта Dharma Sitemap.')
-            ->setHelp("Собирает карту теми же источниками и правилами, что и кнопка компонента и задача Scheduler.\n\nПример: php cli/joomla.php dharmasitemap:build");
+        // В Joomla\Console\Command\AbstractCommand эти методы возвращают void: цепочка вызовов роняет любую команду Joomla CLI.
+        $this->setDescription('Собрать и опубликовать XML-карту сайта Dharma Sitemap.');
+        $this->setHelp("Собирает карту теми же источниками и правилами, что и кнопка компонента и задача Scheduler.\n\nПример: php cli/joomla.php dharmasitemap:build");
     }
 
     protected function doExecute(InputInterface $input, OutputInterface $output): int
