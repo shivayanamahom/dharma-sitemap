@@ -10,7 +10,11 @@ final class UrlNormalizer
     /** Метки рекламы и аналитики: удаляются всегда; `*` в конце — любое продолжение имени. */
     private const TRACKING = ['utm_*', '_ym_*', 'fbclid', 'gclid', 'yclid', 'ysclid', 'dclid', 'msclkid', '_openstat', 'erid'];
 
-    public static function normalize(string $url, string $baseUrl = '', string $trackingParameters = ''): ?string
+    /**
+     * @param string $stripPath Префикс пути, который надо убрать из адреса: в консоли Joomla строит ссылки с технической подстановкой
+     *                          (`/set/by/console/application/…`), а в карте нужен путь от корня сайта.
+     */
+    public static function normalize(string $url, string $baseUrl = '', string $trackingParameters = '', string $stripPath = ''): ?string
     {
         // Кодируем до parse_url: он заменяет часть байтов UTF-8 (управляющие символы C1) на «_» и портит кириллические адреса.
         $parts = parse_url(self::encode(trim(html_entity_decode($url, ENT_QUOTES | ENT_HTML5, 'UTF-8'))));
@@ -20,6 +24,12 @@ final class UrlNormalizer
         }
 
         $path = preg_replace('~/+~', '/', $parts['path'] ?? '/') ?? '/';
+        $strip = rtrim($stripPath, '/');
+
+        if ($strip !== '' && ($path === $strip || str_starts_with($path, $strip . '/'))) {
+            $path = substr($path, strlen($strip)) ?: '/';
+        }
+
         $path = $path === '/' ? '/' : rtrim($path, '/');
         $path = self::encode($path === '' ? '/' : $path);
 

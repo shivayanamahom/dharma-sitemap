@@ -59,7 +59,7 @@ final class MenuSource implements SitemapSourceInterface
         $levels = PublicAccess::list();
         $afterIdValue = $afterId ?? 0;
         $nullDate = $db->quote($db->getNullDate());
-        $query = $db->createQuery()->select(['m.id', 'm.link', 'm.language', 'm.params', 'm.home'])->from($db->quoteName('#__menu', 'm'))
+        $query = $db->createQuery()->select(['m.id', 'm.link', 'm.language', 'm.params', 'm.home', 'm.title'])->from($db->quoteName('#__menu', 'm'))
             ->where('m.client_id = 0')->where('m.published = 1')->where('m.type = ' . $db->quote('component'))->where('m.access IN (' . $levels . ')')
             ->where('m.link LIKE ' . $db->quote('index.php?option=%'))
             ->where('(m.publish_up IS NULL OR m.publish_up <= UTC_TIMESTAMP())')
@@ -95,6 +95,9 @@ final class MenuSource implements SitemapSourceInterface
 
             $entries[] = [
                 'url' => $absolute,
+                'title' => (string) $row->title,
+                'description' => (string) (json_decode((string) $row->params, true)['menu-meta_description'] ?? ''),
+                'section' => 'Страницы',
                 'lastmod' => null,
                 'identity' => $this->getId() . ':' . $row->id . ':' . ($language !== '' ? $language : '*'),
                 'robots' => RobotsPolicy::effective(RobotsPolicy::fromParams($row->params), \in_array($page['option'], self::SHOP_COMPONENTS, true) ? $shop : null, $global),

@@ -43,6 +43,7 @@ https://github.com/shivayanamahom/dharma-sitemap/releases/latest/download/pkg_dh
 - Пакет сборки и Joomla update server: публичный `updates.xml`, install ZIP в GitHub Releases, проверка SHA-256.
 - Ручная сборка в панели компонента и автоматическая сборка через Joomla Scheduler Task.
 - Команда Joomla CLI `dharmasitemap:build`, использующая тот же координатор сборки.
+- Необязательный `/llms.txt` для языковых моделей: название, описание и ссылки по разделам из тех же страниц (настраивается, по умолчанию выключен).
 - Физический `/sitemap.xml` в web root: один файл содержит URL напрямую; при большом количестве URL публикуется sitemap index с версионными частями. При наличии чужого файла публикация останавливается без перезаписи.
 
 ## Руководства

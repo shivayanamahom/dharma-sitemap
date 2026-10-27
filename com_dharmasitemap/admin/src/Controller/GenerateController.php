@@ -25,6 +25,10 @@ final class GenerateController extends BaseController
             $result = (new SitemapBuilder(Factory::getContainer()->get(DatabaseInterface::class)))->build();
             $app->enqueueMessage(Text::sprintf('COM_DHARMASITEMAP_BUILD_SUCCESS', $result['url_count'], $result['duplicate_count']), 'message');
 
+            if (($result['llms']['status'] ?? '') === 'error') {
+                $app->enqueueMessage(Text::sprintf('COM_DHARMASITEMAP_LLMS_WARNING', (string) ($result['llms']['message'] ?? '')), 'warning');
+            }
+
             if (!empty($result['excluded']['noindex'])) {
                 $app->enqueueMessage(Text::sprintf('COM_DHARMASITEMAP_NOINDEX_WARNING', (int) $result['excluded']['noindex']), 'warning');
             }

@@ -14,6 +14,7 @@ $escape = static fn ($value): string => htmlspecialchars((string) $value, ENT_QU
 $params = ComponentHelper::getParams('com_dharmasitemap');
 $base = rtrim((string) $params->get('sitemap_base_url', '') ?: Uri::root(), '/');
 $sitemapUrl = $base . '/sitemap.xml';
+$llmsUrl = $base . '/llms.txt';
 $endpoint = Route::link('site', 'index.php?option=com_dharmasitemap&view=sitemap&format=xml', false, Route::TLS_FORCE, true);
 $schedulerUrl = Route::_('index.php?option=com_scheduler&view=tasks');
 $pluginsUrl = Route::_('index.php?option=com_plugins&view=plugins');
@@ -52,6 +53,19 @@ $canManagePermissions = $identity->authorise('core.admin', 'com_dharmasitemap');
                             <dt class="col-sm-3"><?php echo Text::_('COM_DHARMASITEMAP_FIELD_URL_COUNT'); ?></dt><dd class="col-sm-9"><?php echo (int) $this->activeBuild->url_count; ?></dd>
                             <dt class="col-sm-3"><?php echo Text::_('COM_DHARMASITEMAP_FIELD_DUPLICATES'); ?></dt><dd class="col-sm-9"><?php echo (int) $this->activeBuild->duplicate_count; ?></dd>
                             <dt class="col-sm-3"><?php echo Text::_('COM_DHARMASITEMAP_FIELD_ENDPOINT'); ?></dt><dd class="col-sm-9"><a href="<?php echo $escape($sitemapUrl); ?>" target="_blank" rel="noopener"><?php echo $escape($sitemapUrl); ?></a></dd>
+                            <?php $llms = (array) ($this->report['llms'] ?? []); ?>
+                            <?php if (!empty($llms['status'])) : ?>
+                                <dt class="col-sm-3"><?php echo Text::_('COM_DHARMASITEMAP_LLMS_REPORT'); ?></dt>
+                                <dd class="col-sm-9">
+                                    <?php if ($llms['status'] === 'ok') : ?>
+                                        <a href="<?php echo $escape($llmsUrl); ?>" target="_blank" rel="noopener"><?php echo $escape($llmsUrl); ?></a> — <?php echo $escape(Text::sprintf('COM_DHARMASITEMAP_LLMS_STATUS_OK', (int) ($llms['count'] ?? 0))); ?>
+                                    <?php elseif ($llms['status'] === 'error') : ?>
+                                        <span class="text-danger"><?php echo $escape(Text::sprintf('COM_DHARMASITEMAP_LLMS_STATUS_ERROR', (string) ($llms['message'] ?? ''))); ?></span>
+                                    <?php else : ?>
+                                        <?php echo $escape(Text::_('COM_DHARMASITEMAP_LLMS_STATUS_OFF')); ?>
+                                    <?php endif; ?>
+                                </dd>
+                            <?php endif; ?>
                         </dl>
                         <?php if (!empty($this->report['excluded']['noindex'])) : ?>
                             <div class="alert alert-warning mt-3 mb-0"><?php echo $escape(Text::sprintf('COM_DHARMASITEMAP_NOINDEX_WARNING', (int) $this->report['excluded']['noindex'])); ?></div>
@@ -129,6 +143,13 @@ $canManagePermissions = $identity->authorise('core.admin', 'com_dharmasitemap');
         <div class="card"><div class="card-body">
             <p class="text-muted"><?php echo Text::_('COM_DHARMASITEMAP_SETTINGS_EXCLUSIONS_DESC'); ?></p>
             <?php echo $this->form->renderFieldset('exclusions'); ?>
+        </div></div>
+        <?php echo HTMLHelper::_('uitab.endTab'); ?>
+
+        <?php echo HTMLHelper::_('uitab.addTab', 'dharmaSitemapSettingsTabs', 'llms', Text::_('COM_DHARMASITEMAP_CONFIG_LLMS')); ?>
+        <div class="card"><div class="card-body">
+            <p class="text-muted"><?php echo Text::_('COM_DHARMASITEMAP_SETTINGS_LLMS_DESC'); ?></p>
+            <?php echo $this->form->renderFieldset('llms'); ?>
         </div></div>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
 

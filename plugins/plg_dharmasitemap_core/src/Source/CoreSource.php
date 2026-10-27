@@ -89,6 +89,9 @@ final class CoreSource implements SitemapSourceInterface
 
             $entries[] = [
                 'url' => $route,
+                'title' => $row->title ?? null,
+                'description' => ($row->metadesc ?? '') !== '' ? $row->metadesc : ($row->introtext ?? null),
+                'section' => $row->section_title ?? $this->defaultSection(),
                 'lastmod' => $row->modified ?: null,
                 'identity' => $this->getId() . ':' . $row->id . ':' . ($row->language ?? '*'),
                 // Запись → пункт меню этой страницы → общие настройки Joomla: тот же порядок, что при показе страницы.
@@ -108,7 +111,7 @@ final class CoreSource implements SitemapSourceInterface
         $db = $this->db;
         $levels = PublicAccess::list();
 
-        return $db->createQuery()->select(['x.id', 'x.catid', 'x.alias', 'x.modified', 'x.language', 'x.metadata', $db->quote('article') . ' AS route'])
+        return $db->createQuery()->select(['x.id', 'x.catid', 'x.alias', 'x.modified', 'x.language', 'x.metadata', 'x.title', 'x.metadesc', 'x.introtext', 'c.title AS section_title', $db->quote('article') . ' AS route'])
             ->from($db->quoteName('#__content', 'x'))
             ->join('INNER', $db->quoteName('#__categories', 'c') . ' ON c.id = x.catid AND c.extension = ' . $db->quote('com_content'))
             ->where('x.state = 1')->where('x.access IN (' . $levels . ')')->where('c.published = 1')->where('c.access IN (' . $levels . ')')
@@ -125,7 +128,7 @@ final class CoreSource implements SitemapSourceInterface
     {
         $db = $this->db;
         $levels = PublicAccess::list();
-        $query = $db->createQuery()->select(['x.id', '0 AS catid', 'x.alias', 'x.modified_time AS modified', $db->quote('*') . ' AS language', 'x.metadata', $db->quote('category') . ' AS route'])
+        $query = $db->createQuery()->select(['x.id', '0 AS catid', 'x.alias', 'x.modified_time AS modified', $db->quote('*') . ' AS language', 'x.metadata', 'x.title', 'x.metadesc', 'x.description AS introtext', $db->quote('category') . ' AS route'])
             ->from($db->quoteName('#__categories', 'x'))->where('x.extension = ' . $db->quote($extension))
             ->where('x.id > 1')->where('x.published = 1')->where('x.access IN (' . $levels . ')')
             ->where($this->openBranch('x', $extension, true));
@@ -145,7 +148,7 @@ final class CoreSource implements SitemapSourceInterface
         $db = $this->db;
         $levels = PublicAccess::list();
 
-        return $db->createQuery()->select(['x.id', 'x.catid', 'x.alias', 'x.modified', 'x.language', 'x.metadata', $db->quote($view) . ' AS route'])
+        return $db->createQuery()->select(['x.id', 'x.catid', 'x.alias', 'x.modified', 'x.language', 'x.metadata', 'x.name AS title', 'x.metadesc', $db->quote($view) . ' AS route'])
             ->from($db->quoteName($table, 'x'))
             ->join('INNER', $db->quoteName('#__categories', 'c') . ' ON c.id = x.catid AND c.extension = ' . $db->quote($extension))
             ->where($filter)->where('x.access IN (' . $levels . ')')->where('c.published = 1')->where('c.access IN (' . $levels . ')')
@@ -159,10 +162,22 @@ final class CoreSource implements SitemapSourceInterface
         $db = $this->db;
         $levels = PublicAccess::list();
 
-        return $db->createQuery()->select(['x.id', '0 AS catid', 'x.alias', 'x.modified_time AS modified', $db->quote('*') . ' AS language', 'x.metadata', $db->quote('tag') . ' AS route'])
+        return $db->createQuery()->select(['x.id', '0 AS catid', 'x.alias', 'x.modified_time AS modified', $db->quote('*') . ' AS language', 'x.metadata', 'x.title', 'x.metadesc', $db->quote('tag') . ' AS route'])
             ->from($db->quoteName('#__tags', 'x'))->where('x.published = 1')->where('x.access IN (' . $levels . ')')->where('x.id > 1')
             ->where('EXISTS (SELECT 1 FROM ' . $db->quoteName('#__contentitem_tag_map', 'm') . ' INNER JOIN ' . $db->quoteName('#__content', 'c') . ' ON c.id = m.content_item_id AND m.type_alias = ' . $db->quote('com_content.article')
                 . ' WHERE m.tag_id = x.id AND c.state = 1 AND c.access IN (' . $levels . '))');
+    }
+
+    /** Раздел в llms.txt для записей без своей категории: категории — «Разделы сайта», остальное — по источнику. */
+    private function defaultSection(): string
+    {
+        return match ($this->id) {
+            'content_categories', 'contact_categories', 'newsfeed_categories' => 'Разделы сайта',
+            'contacts' => 'Контакты',
+            'newsfeeds' => 'Ленты новостей',
+            'tags' => 'Метки',
+            default => 'Страницы',
+        };
     }
 
     /**

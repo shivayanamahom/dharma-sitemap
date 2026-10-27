@@ -24,6 +24,16 @@
         <field name="exclude_url_patterns" type="textarea" rows="7" label="COM_DHARMASITEMAP_FIELD_EXCLUDE_URLS" description="COM_DHARMASITEMAP_FIELD_EXCLUDE_URLS_DESC" filter="string" />
         <field name="exclude_entities" type="textarea" rows="7" label="COM_DHARMASITEMAP_FIELD_EXCLUDE_ENTITIES" description="COM_DHARMASITEMAP_FIELD_EXCLUDE_ENTITIES_DESC" filter="string" />
     </fieldset>
+    <fieldset name="llms" label="COM_DHARMASITEMAP_CONFIG_LLMS">
+        <field name="llms_enabled" type="radio" label="COM_DHARMASITEMAP_FIELD_LLMS_ENABLED" description="COM_DHARMASITEMAP_FIELD_LLMS_ENABLED_DESC" default="0" class="btn-group btn-group-yesno"><option value="1">JYES</option><option value="0">JNO</option></field>
+        <field name="llms_title" type="text" label="COM_DHARMASITEMAP_FIELD_LLMS_TITLE" description="COM_DHARMASITEMAP_FIELD_LLMS_TITLE_DESC" filter="string" />
+        <field name="llms_summary" type="textarea" rows="3" label="COM_DHARMASITEMAP_FIELD_LLMS_SUMMARY" description="COM_DHARMASITEMAP_FIELD_LLMS_SUMMARY_DESC" filter="string" />
+        <field name="llms_details" type="textarea" rows="4" label="COM_DHARMASITEMAP_FIELD_LLMS_DETAILS" description="COM_DHARMASITEMAP_FIELD_LLMS_DETAILS_DESC" filter="string" />
+        <field name="llms_rename_sections" type="textarea" rows="4" label="COM_DHARMASITEMAP_FIELD_LLMS_RENAME" description="COM_DHARMASITEMAP_FIELD_LLMS_RENAME_DESC" filter="string" />
+        <field name="llms_section_order" type="textarea" rows="4" label="COM_DHARMASITEMAP_FIELD_LLMS_ORDER" description="COM_DHARMASITEMAP_FIELD_LLMS_ORDER_DESC" filter="string" />
+        <field name="llms_max_links" type="number" label="COM_DHARMASITEMAP_FIELD_LLMS_MAX" description="COM_DHARMASITEMAP_FIELD_LLMS_MAX_DESC" default="300" min="10" max="2000" filter="integer" />
+        <field name="llms_exclude_url_patterns" type="textarea" rows="4" label="COM_DHARMASITEMAP_FIELD_LLMS_EXCLUDE" description="COM_DHARMASITEMAP_FIELD_LLMS_EXCLUDE_DESC" filter="string" />
+    </fieldset>
     <fieldset name="permissions" label="COM_DHARMASITEMAP_TAB_PERMISSIONS">
         <field name="rules" type="rules" component="com_dharmasitemap" section="component" label="JCONFIG_PERMISSIONS_LABEL" filter="rules" />
     </fieldset>

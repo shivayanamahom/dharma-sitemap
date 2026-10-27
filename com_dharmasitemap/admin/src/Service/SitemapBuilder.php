@@ -41,6 +41,7 @@ final class SitemapBuilder
         $keepBuilds = (int) $params->get('keep_builds', 3);
         $baseUrl = (string) $params->get('sitemap_base_url', '');
         $tracking = (string) $params->get('tracking_parameters', '');
+        $stripPath = $this->consolePrefix($baseUrl);
 
         // В долгоживущем процессе (отложенный cron Scheduler) кэши прошлой сборки устарели.
         PublicAccess::reset();
@@ -84,7 +85,7 @@ final class SitemapBuilder
 
                         foreach ($batch['entries'] as $entry) {
                             $reason = $this->reject($entry, $hosts, $respectNoindex);
-                            $url = $reason === null ? UrlNormalizer::normalize($entry['url'], $baseUrl, $tracking) : null;
+                            $url = $reason === null ? UrlNormalizer::normalize($entry['url'], $baseUrl, $tracking, $stripPath) : null;
 
                             if ($reason === null && $url === null) {
                                 $reason = 'invalid';
@@ -99,7 +100,7 @@ final class SitemapBuilder
                                 continue;
                             }
 
-                            $rows[] = [$url, $source->getId(), $entry['identity'], $entry['lastmod'] ?? null];
+                            $rows[] = [$url, $source->getId(), $entry['identity'], $entry['lastmod'] ?? null, $entry['title'] ?? null, $entry['description'] ?? null, $entry['section'] ?? null];
                         }
 
                         $inserted = $this->insertUrls($buildId, $rows);
@@ -131,7 +132,8 @@ final class SitemapBuilder
             $base = $this->siteBase($baseUrl);
             $parts = $this->writeParts($buildId, $base);
             $this->publishStaticFiles($buildId, $parts, $base, Paths::buildDirectory($buildId));
-            $report = ['sources' => $sourceReport, 'excluded' => array_filter($excludedTotals)];
+            $llms = $this->publishLlms($buildId, $params);
+            $report = ['sources' => $sourceReport, 'excluded' => array_filter($excludedTotals), 'llms' => $llms];
 
             $db->transactionStart();
             $transactionStarted = true;
@@ -158,7 +160,7 @@ final class SitemapBuilder
 
             return [
                 'build_id' => $buildId, 'url_count' => $total, 'duplicate_count' => $duplicates, 'parts' => $parts,
-                'sources' => $sourceReport, 'excluded' => $report['excluded'], 'cleanup' => $cleanup,
+                'sources' => $sourceReport, 'excluded' => $report['excluded'], 'llms' => $llms, 'cleanup' => $cleanup,
             ];
         } catch (\Throwable $error) {
             if ($transactionStarted) {
@@ -204,21 +206,21 @@ final class SitemapBuilder
     /**
      * Отчёт сборки в едином виде. Сборки версии до 0.3 хранили только список источников.
      *
-     * @return array{sources: list<array<string, mixed>>, excluded: array<string, int>}
+     * @return array{sources: list<array<string, mixed>>, excluded: array<string, int>, llms: array<string, mixed>}
      */
     public static function readReport(?object $build): array
     {
         $data = $build && !empty($build->report) ? json_decode((string) $build->report, true) : null;
 
         if (!\is_array($data)) {
-            return ['sources' => [], 'excluded' => []];
+            return ['sources' => [], 'excluded' => [], 'llms' => []];
         }
 
         if (isset($data['sources'])) {
-            return ['sources' => (array) $data['sources'], 'excluded' => (array) ($data['excluded'] ?? [])];
+            return ['sources' => (array) $data['sources'], 'excluded' => (array) ($data['excluded'] ?? []), 'llms' => (array) ($data['llms'] ?? [])];
         }
 
-        return ['sources' => array_values($data), 'excluded' => []];
+        return ['sources' => array_values($data), 'excluded' => [], 'llms' => []];
     }
 
     /** @return list<SitemapSourceInterface> */
@@ -296,6 +298,32 @@ final class SitemapBuilder
                 throw new \RuntimeException('Не установлена схема Dharma Sitemap. Переустановите компонент.');
             }
         }
+
+        // Версии до 0.4 хранили в таблице адресов только URL и дату; названия и разделы нужны для llms.txt.
+        $columns = $db->getTableColumns($db->replacePrefix('#__dharmasitemap_urls'), false);
+
+        foreach (['title' => 'varchar(255) NULL', 'description' => 'varchar(500) NULL', 'section' => 'varchar(190) NULL'] as $name => $definition) {
+            if (!isset($columns[$name])) {
+                $db->setQuery('ALTER TABLE ' . $db->quoteName('#__dharmasitemap_urls') . ' ADD COLUMN ' . $db->quoteName($name) . ' ' . $definition)->execute();
+            }
+        }
+    }
+
+    /**
+     * Корень пути, который надо убрать из адресов. В консоли Joomla строит ссылки с технической подстановкой вместо домена
+     * и каталога сайта, поэтому сборка из командной строки без канонического адреса невозможна.
+     */
+    private function consolePrefix(string $baseUrl): string
+    {
+        if (!Factory::getApplication() instanceof \Joomla\CMS\Application\ConsoleApplication) {
+            return '';
+        }
+
+        if ($baseUrl === '') {
+            throw new \RuntimeException('Сборка из командной строки требует «Канонический адрес сайта» в настройках карты: консоль не знает домен сайта.');
+        }
+
+        return rtrim((string) parse_url(Uri::root(), PHP_URL_PATH), '/');
     }
 
     private function acquireLock(): string
@@ -328,7 +356,7 @@ final class SitemapBuilder
      * Добавляет адреса одной вставкой. Повтор URL или сущности отсекают уникальные индексы (INSERT IGNORE), поэтому на каждый адрес
      * не нужен отдельный SELECT. Возвращает, сколько строк реально добавлено.
      *
-     * @param list<array{0:string,1:string,2:string,3:?string}> $rows url, источник, identity, lastmod
+     * @param list<array{0:string,1:string,2:string,3:?string,4:?string,5:?string,6:?string}> $rows url, источник, identity, lastmod, название, описание, раздел
      */
     private function insertUrls(int $buildId, array $rows): int
     {
@@ -339,19 +367,29 @@ final class SitemapBuilder
         $db = $this->db;
         $values = [];
 
-        foreach ($rows as [$url, $source, $identity, $lastmod]) {
+        foreach ($rows as [$url, $source, $identity, $lastmod, $title, $description, $section]) {
             // identity_key — varchar(190): длинный ключ заменяем отпечатком, иначе IGNORE молча обрежет его и склеит разные сущности.
             $identity = strlen($identity) > 190 ? 'h:' . hash('sha256', $identity) : $identity;
             $stamp = self::lastmod($lastmod);
             $values[] = '(' . implode(', ', [
                 $buildId, $db->quote(hash('sha256', $url)), $db->quote($url), $db->quote($source), $db->quote($identity),
                 $stamp !== null ? $db->quote($stamp) : 'NULL',
+                ...array_map(static fn (?string $text): string => $text !== null ? $db->quote($text) : 'NULL', [self::text($title, 255), self::text($description, 500), self::text($section, 190)]),
             ]) . ')';
         }
 
-        $db->setQuery('INSERT IGNORE INTO ' . $db->quoteName('#__dharmasitemap_urls') . ' (build_id, url_hash, url, source_id, identity_key, lastmod) VALUES ' . implode(', ', $values))->execute();
+        $db->setQuery('INSERT IGNORE INTO ' . $db->quoteName('#__dharmasitemap_urls') . ' (build_id, url_hash, url, source_id, identity_key, lastmod, title, description, section) VALUES ' . implode(', ', $values))->execute();
 
         return (int) $db->getAffectedRows();
+    }
+
+    /** Короткий текст для llms.txt: без тегов и переносов, не длиннее лимита столбца; пустое значение — NULL. */
+    private static function text(?string $value, int $length): ?string
+    {
+        $text = trim((string) preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags((string) $value), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        $text = mb_substr($text, 0, $length);
+
+        return $text === '' ? null : $text;
     }
 
     /** Дата изменения в UTC или null: пустые, нулевые и заведомо неверные даты (раньше 1990 года) не публикуются. */
@@ -540,6 +578,85 @@ final class SitemapBuilder
         }
 
         $this->replaceAtomically($root, $indexPath, $xml . "</sitemapindex>\n");
+    }
+
+    /**
+     * Публикует `/llms.txt` в корне сайта по тем же адресам, что вошли в карту. Ошибка здесь не отменяет карту: она попадает в отчёт.
+     *
+     * @return array{status:string,count?:int,message?:string}
+     */
+    private function publishLlms(int $buildId, object $params): array
+    {
+        if ((int) $params->get('llms_enabled', 0) !== 1) {
+            return ['status' => 'off'];
+        }
+
+        try {
+            $db = $this->db;
+            $exclusions = Exclusions::fromSettings((string) $params->get('llms_exclude_url_patterns', ''), '');
+            $items = [];
+            $last = 0;
+
+            while (true) {
+                $rows = $db->setQuery($db->createQuery()->select($db->quoteName(['id', 'url', 'identity_key', 'title', 'description', 'section']))->from($db->quoteName('#__dharmasitemap_urls'))
+                    ->where('build_id = ' . $buildId)->where('id > ' . $last)->order($db->quoteName('id') . ' ASC'), 0, self::WRITE_BATCH)->loadObjectList();
+
+                if (!$rows) {
+                    break;
+                }
+
+                foreach ($rows as $row) {
+                    $last = (int) $row->id;
+
+                    if (!$exclusions->matches((string) $row->identity_key, (string) $row->url)) {
+                        $items[] = ['url' => (string) $row->url, 'title' => $row->title, 'description' => $row->description, 'section' => $row->section];
+                    }
+                }
+            }
+
+            $lines = static fn (string $text): array => array_values(array_filter(array_map('trim', preg_split('/\R/u', $text) ?: [])));
+            $rename = [];
+
+            foreach ($lines((string) $params->get('llms_rename_sections', '')) as $line) {
+                if (str_contains($line, '=')) {
+                    [$from, $to] = array_map('trim', explode('=', $line, 2));
+
+                    if ($from !== '' && $to !== '') {
+                        $rename[$from] = $to;
+                    }
+                }
+            }
+
+            $text = LlmsTxtBuilder::build([
+                'title'     => trim((string) $params->get('llms_title', '')) ?: (string) Factory::getApplication()->get('sitename', 'Site'),
+                'summary'   => (string) $params->get('llms_summary', ''),
+                'details'   => (string) $params->get('llms_details', ''),
+                'rename'    => $rename,
+                'order'     => $lines((string) $params->get('llms_section_order', '')),
+                'max_links' => (int) $params->get('llms_max_links', 300),
+            ], $items);
+
+            $root = rtrim(JPATH_ROOT, '/\\');
+            $target = $root . '/llms.txt';
+
+            if (is_link($target)) {
+                throw new \RuntimeException('Файл llms.txt является символической ссылкой; публикация остановлена.');
+            }
+
+            if (is_file($target)) {
+                $existing = (string) file_get_contents($target);
+
+                if (!str_contains($existing, LlmsTxtBuilder::MARKER)) {
+                    throw new \RuntimeException('В корне уже есть чужой llms.txt. Компонент не будет его перезаписывать.');
+                }
+            }
+
+            $this->replaceAtomically($root, $target, $text);
+
+            return ['status' => 'ok', 'count' => substr_count($text, "\n- [")];
+        } catch (\Throwable $error) {
+            return ['status' => 'error', 'message' => mb_substr($error->getMessage(), 0, 300)];
+        }
     }
 
     /** Записывает файл через временный и заменяет целевой одним rename: посетители видят либо старую карту, либо новую. */

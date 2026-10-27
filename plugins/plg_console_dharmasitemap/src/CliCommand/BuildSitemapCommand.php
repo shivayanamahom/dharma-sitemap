@@ -41,6 +41,14 @@ final class BuildSitemapCommand extends AbstractCommand
                 $io->writeln(sprintf('  %-45s %d%s', $source['source'], $source['count'], $source['excluded'] ? '  (исключено: ' . json_encode($source['excluded'], JSON_UNESCAPED_UNICODE) . ')' : ''));
             }
 
+            $llms = $result['llms'] ?? ['status' => 'off'];
+
+            if ($llms['status'] === 'ok') {
+                $io->writeln(sprintf('  llms.txt: опубликован, ссылок: %d', $llms['count'] ?? 0));
+            } elseif ($llms['status'] === 'error') {
+                $io->warning('llms.txt не создан: ' . ($llms['message'] ?? ''));
+            }
+
             return 0;
         } catch (\Throwable $error) {
             $io->error('Сборка не опубликована: ' . $error->getMessage());

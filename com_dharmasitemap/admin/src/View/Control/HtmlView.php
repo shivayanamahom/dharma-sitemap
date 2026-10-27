@@ -17,8 +17,8 @@ final class HtmlView extends BaseHtmlView
 {
     public ?object $activeBuild = null;
     public ?Form $form = null;
-    /** @var array{sources: list<array<string, mixed>>, excluded: array<string, int>} */
-    public array $report = ['sources' => [], 'excluded' => []];
+    /** @var array{sources: list<array<string, mixed>>, excluded: array<string, int>, llms: array<string, mixed>} */
+    public array $report = ['sources' => [], 'excluded' => [], 'llms' => []];
 
     public function display($tpl = null): void
     {

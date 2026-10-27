@@ -25,6 +25,7 @@ spl_autoload_register(static function (string $class) use ($root): void {
 });
 
 use Dharma\Component\DharmaSitemap\Administrator\Service\Exclusions;
+use Dharma\Component\DharmaSitemap\Administrator\Service\LlmsTxtBuilder;
 use Dharma\Component\DharmaSitemap\Administrator\Service\MenuViewPolicy;
 use Dharma\Component\DharmaSitemap\Administrator\Service\Paths;
 use Dharma\Component\DharmaSitemap\Administrator\Service\Retention;
@@ -300,6 +301,34 @@ check('other build kept', is_file(JPATH_ROOT . '/sitemap-50-1.xml'), true);
 check('look-alike user file kept', is_file(JPATH_ROOT . '/sitemap-5-3.xml'), true);
 check('backup copy kept', is_file(JPATH_ROOT . '/sitemap-5-1.xml.bak'), true);
 check('main sitemap never touched', is_file(JPATH_ROOT . '/sitemap.xml'), true);
+
+// ---------------------------------------------------------------- Консольный префикс адресов
+$console = '/set/by/console/application/';
+check('console prefix stripped from path', UrlNormalizer::normalize('https://joomla.invalid/set/by/console/application/services/x', 'https://example.com', '', $console), 'https://example.com/services/x');
+check('console root becomes site root', UrlNormalizer::normalize('https://joomla.invalid/set/by/console/application', 'https://example.com', '', $console), 'https://example.com/');
+check('console prefix keeps query', UrlNormalizer::normalize('https://joomla.invalid/set/by/console/application/a?id=5&utm_x=1', 'https://example.com', '', $console), 'https://example.com/a?id=5');
+check('similar path is not stripped', UrlNormalizer::normalize('https://example.com/set/by/console/applications/x', '', '', $console), 'https://example.com/set/by/console/applications/x');
+check('no prefix by default', UrlNormalizer::normalize('https://example.com/set/by/console/application/x'), 'https://example.com/set/by/console/application/x');
+
+// ---------------------------------------------------------------- llms.txt
+$llmsItems = [
+    ['url' => 'https://example.com/a', 'title' => 'Первая [услуга]', 'description' => "<p>Описание   с\nпереносом</p>", 'section' => 'Услуги'],
+    ['url' => 'https://example.com/b (1)', 'title' => 'Статья', 'description' => null, 'section' => 'Uncategorised'],
+    ['url' => 'https://example.com/c', 'title' => 'Вторая услуга', 'description' => '', 'section' => 'Услуги'],
+    ['url' => 'https://example.com/no-title', 'title' => '', 'description' => 'x', 'section' => 'Услуги'],
+    ['url' => 'https://example.com/d', 'title' => 'Контакты', 'description' => '', 'section' => null],
+];
+$llms = LlmsTxtBuilder::build(['title' => "Сайт\nкомпании", 'summary' => 'Кратко о сайте.', 'details' => "Подробности.\r\nВторая строка.", 'rename' => ['Uncategorised' => 'О компании'], 'order' => ['О компании', 'Нет такого']], $llmsItems);
+check('llms starts with one-line title', str_starts_with($llms, "# Сайт компании\n"), true);
+check('llms has summary quote', str_contains($llms, "\n> Кратко о сайте.\n"), true);
+check('llms keeps details with unified line breaks', str_contains($llms, "\nПодробности.\nВторая строка.\n"), true);
+check('llms ordered sections', array_values(array_filter(explode("\n", $llms), static fn (string $l): bool => str_starts_with($l, '## '))), ['## О компании', '## Услуги', '## Страницы']);
+check('llms link with description and escaped brackets', str_contains($llms, "- [Первая \\[услуга\\]](https://example.com/a): Описание с переносом\n"), true);
+check('llms escapes parentheses in url', str_contains($llms, "- [Статья](https://example.com/b%20%281%29)\n"), true);
+check('llms skips entries without title', str_contains($llms, 'no-title'), false);
+check('llms ends with marker', str_ends_with($llms, "\n" . LlmsTxtBuilder::MARKER . "\n"), true);
+check('llms limit of links', substr_count(LlmsTxtBuilder::build(['title' => 'T', 'max_links' => 10], array_fill(0, 30, ['url' => 'https://e.com/x', 'title' => 'X', 'description' => '', 'section' => 'S'])), "\n- ["), 10);
+check('llms long description is cut at a word', mb_strlen(explode(': ', explode("\n", trim(LlmsTxtBuilder::build(['title' => 'T'], [['url' => 'https://e.com/', 'title' => 'X', 'description' => str_repeat('слово ', 100), 'section' => 'S']])))[6] ?? '')[1] ?? '') <= 221, true);
 
 rrmdir($sandbox);
 
