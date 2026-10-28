@@ -5,13 +5,13 @@
         <description>Extensible XML sitemap generator for Joomla and Dharma Shop</description>
         <element>pkg_dharmasitemap</element>
         <type>package</type>
-        <version>0.4.0</version>
+        <version>0.4.1</version>
         <client>site</client>
         <downloads>
-            <downloadurl type="full" format="zip">https://github.com/shivayanamahom/dharma-sitemap/releases/download/v0.4.0/pkg_dharmasitemap-0.4.0.zip</downloadurl>
+            <downloadurl type="full" format="zip">https://github.com/shivayanamahom/dharma-sitemap/releases/download/v0.4.1/pkg_dharmasitemap-0.4.1.zip</downloadurl>
         </downloads>
-        <infourl title="Dharma Sitemap 0.4.0">https://github.com/shivayanamahom/dharma-sitemap/releases/tag/v0.4.0</infourl>
-        <sha256>7ab9dfb1ca1a36eec2cbbf6a099d08f921c7d050a5a1ebeb4d3be9a7eb9ec070</sha256>
+        <infourl title="Dharma Sitemap 0.4.1">https://github.com/shivayanamahom/dharma-sitemap/releases/tag/v0.4.1</infourl>
+        <sha256>73c90c0e7a3892b293097026b5418a8a2310a577517b5faf565424c0fde1bbcc</sha256>
         <tags>
             <tag>stable</tag>
         </tags>
