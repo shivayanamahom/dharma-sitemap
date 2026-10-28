@@ -23,8 +23,7 @@ $canEditSettings = $identity->authorise('core.options', 'com_dharmasitemap') || 
 $canManagePermissions = $identity->authorise('core.admin', 'com_dharmasitemap');
 ?>
 <div class="container-fluid">
-    <h1><?php echo Text::_('COM_DHARMASITEMAP_TITLE'); ?></h1>
-    <p class="text-muted"><?php echo Text::_('COM_DHARMASITEMAP_INTRO'); ?></p>
+    <p class="lead text-muted"><?php echo Text::_('COM_DHARMASITEMAP_INTRO'); ?></p>
 
     <?php echo HTMLHelper::_('uitab.startTabSet', 'dharmaSitemapTabs', ['active' => 'overview', 'recall' => true]); ?>
 

@@ -7,8 +7,10 @@ use Dharma\Component\DharmaSitemap\Administrator\Service\SitemapBuilder;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Form\Form;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Table\Asset;
+use Joomla\CMS\Toolbar\ToolbarHelper;
 use Joomla\Database\DatabaseInterface;
 
 \defined('_JEXEC') or die;
@@ -51,6 +53,15 @@ final class HtmlView extends BaseHtmlView
         $this->form->addControlField('component', 'com_dharmasitemap');
         $this->form->addControlField('return', base64_encode('index.php?option=com_dharmasitemap#settings'));
 
+        $this->addToolbar();
+
         parent::display($tpl);
+    }
+
+    /** Штатная шапка Joomla: заголовок с иконкой и кнопка «Параметры» (она сама скрывается без прав). */
+    private function addToolbar(): void
+    {
+        ToolbarHelper::title(Text::_('COM_DHARMASITEMAP_TITLE'), 'sitemap');
+        ToolbarHelper::preferences('com_dharmasitemap');
     }
 }
