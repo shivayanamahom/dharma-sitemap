@@ -6,6 +6,14 @@
 [![PHP](https://img.shields.io/badge/PHP-8.3%2B-777bb4.svg)](https://www.php.net/)
 [![License: GPL-2.0+](https://img.shields.io/badge/License-GPL--2.0%2B-blue.svg)](LICENSE)
 
+<!-- ai-notice -->
+> [!NOTE]
+> **О проекте.** Этот проект написан при помощи ИИ для моего собственного использования и опубликован «как есть» (*as is*). Он может содержать ошибки и подходить не для всех сайтов и версий Joomla. Гарантий, поддержки и сроков исправления я не обещаю. Перед использованием изучите код и проверьте его на тестовой копии сайта, всё на ваш риск. Идеи и замечания приветствуются (Issues, Pull Request), но отвечу и приму их не обязательно.
+>
+> *AI-assisted and built for my own use. Provided **as is**, without warranty or support. Review the code and test on a staging copy first; use at your own risk. Issues and PRs are welcome, but no response is guaranteed.*
+
+<!-- /ai-notice -->
+
 Расширяемый генератор XML-карт сайта для Joomla: ядро Joomla, Dharma Shop и сторонние источники URL через плагины.
 
 ## Установка
