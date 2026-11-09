@@ -179,6 +179,10 @@ $view = static fn (string $link, bool $home = false): string => MenuViewPolicy::
 foreach (['cart', 'checkout', 'checkoutcomplete', 'favorites', 'order', 'orders', 'payment', 'search'] as $private) {
     check("shop $private is private", $view("index.php?option=com_dharmashop&view=$private"), MenuViewPolicy::PRIVATE);
 }
+foreach (['search', 'form'] as $clinicPrivate) {
+    check("clinic $clinicPrivate is private", $view("index.php?option=com_dharmaclinic&view=$clinicPrivate"), MenuViewPolicy::PRIVATE);
+}
+check('clinic doctors page stays in the sitemap', $view('index.php?option=com_dharmaclinic&view=doctors'), MenuViewPolicy::INCLUDE);
 check('login is private', $view('index.php?option=com_users&view=login'), MenuViewPolicy::PRIVATE);
 check('profile is private', $view('index.php?option=com_users&view=profile'), MenuViewPolicy::PRIVATE);
 check('finder search is private', $view('index.php?option=com_finder&view=search'), MenuViewPolicy::PRIVATE);

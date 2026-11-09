@@ -8,6 +8,7 @@
     <license>GNU General Public License version 2 or later</license>
     <version>0.1.0</version>
     <description>PKG_DHARMASITEMAP_XML_DESCRIPTION</description>
+    <scriptfile>script.php</scriptfile>
     <files>
         <file type="component" id="com_dharmasitemap">com_dharmasitemap.zip</file>
         <file type="plugin" id="core" group="dharmasitemap">plg_dharmasitemap_core.zip</file>

@@ -42,7 +42,7 @@ build_plugin "$PROJECT_ROOT/plugins/plg_console_dharmasitemap" plg_console_dharm
 
 PACKAGE_STAGE="$BUILD_ROOT/package-root"
 mkdir -p "$PACKAGE_STAGE/language/ru-RU" "$PACKAGE_STAGE/language/en-GB"
-cp "$PROJECT_ROOT/pkg_dharmasitemap.xml" "$PACKAGE_STAGE/"
+cp "$PROJECT_ROOT/pkg_dharmasitemap.xml" "$PROJECT_ROOT/script.php" "$PACKAGE_STAGE/"
 cp "$PROJECT_ROOT/language/ru-RU/pkg_dharmasitemap.sys.ini" "$PACKAGE_STAGE/language/ru-RU/"
 cp "$PROJECT_ROOT/language/en-GB/pkg_dharmasitemap.sys.ini" "$PACKAGE_STAGE/language/en-GB/"
 cp "$DIST_ROOT/com_dharmasitemap.zip" "$DIST_ROOT/plg_dharmasitemap_core.zip" "$DIST_ROOT/plg_dharmasitemap_dharmashop.zip" "$DIST_ROOT/plg_system_dharmasitemap.zip" "$DIST_ROOT/plg_task_dharmasitemap.zip" "$DIST_ROOT/plg_console_dharmasitemap.zip" "$PACKAGE_STAGE/"

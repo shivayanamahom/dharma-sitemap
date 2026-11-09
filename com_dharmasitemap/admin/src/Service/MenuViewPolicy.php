@@ -30,6 +30,8 @@ final class MenuViewPolicy
         'com_dharmashop' => ['cart', 'checkout', 'checkoutcomplete', 'favorites', 'order', 'orders', 'payment', 'search'],
         'com_content' => ['form'],
         'com_contact' => ['form'],
+        // Клиника: поиск по сайту закрыт noindex, форма — служебная.
+        'com_dharmaclinic' => ['search', 'form'],
     ];
 
     /** Виды, адреса которых отдают источники сущностей. */
