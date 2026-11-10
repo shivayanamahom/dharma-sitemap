@@ -121,7 +121,7 @@ $canManagePermissions = $identity->authorise('core.admin', 'com_dharmasitemap');
 
     <?php echo HTMLHelper::_('uitab.addTab', 'dharmaSitemapTabs', 'settings', Text::_('COM_DHARMASITEMAP_SETTINGS')); ?>
     <?php if ($canEditSettings) : ?>
-    <form action="<?php echo Route::_('index.php?option=com_config'); ?>" id="dharma-sitemap-settings" method="post" class="form-validate">
+    <form action="<?php echo Route::_('index.php?option=com_config'); ?>" id="adminForm" name="adminForm" method="post" class="form-validate">
         <?php echo HTMLHelper::_('uitab.startTabSet', 'dharmaSitemapSettingsTabs', ['active' => 'general', 'recall' => true]); ?>
 
         <?php echo HTMLHelper::_('uitab.addTab', 'dharmaSitemapSettingsTabs', 'general', Text::_('COM_DHARMASITEMAP_CONFIG_GENERAL')); ?>
@@ -174,9 +174,6 @@ $canManagePermissions = $identity->authorise('core.admin', 'com_dharmasitemap');
         <?php endif; ?>
 
         <?php echo HTMLHelper::_('uitab.endTabSet'); ?>
-        <div class="mt-3 d-flex gap-2">
-            <button type="submit" class="btn btn-primary"><?php echo Text::_('JSAVE'); ?></button>
-        </div>
         <?php echo $this->form->renderControlFields(); ?>
         <?php echo HTMLHelper::_('form.token'); ?>
     </form>

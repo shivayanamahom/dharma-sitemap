@@ -62,6 +62,30 @@ final class HtmlView extends BaseHtmlView
     private function addToolbar(): void
     {
         ToolbarHelper::title(Text::_('COM_DHARMASITEMAP_TITLE'), 'sitemap');
+
+        $user = Factory::getApplication()->getIdentity();
+
+        // «Сохранить» — в штатной панели Joomla (как у всех компонентов), а не внизу формы. Форма настроек называется adminForm,
+        // поэтому штатная кнопка отправляет именно её; на вкладке «Обзор» кнопка скрывается (там сохранять нечего).
+        if ($user->authorise('core.options', 'com_dharmasitemap') || $user->authorise('core.admin', 'com_dharmasitemap')) {
+            // Одна кнопка «Сохранить»: остаётся на этой странице (адрес возврата задан в форме). «Применить» здесь не нужно:
+            // оно отправило бы на штатную страницу параметров com_config.
+            Factory::getApplication()->getDocument()->getToolbar()->standardButton('save', 'JAPPLY', 'component.save')->icon('icon-save')->buttonClass('btn btn-success');
+            Factory::getApplication()->getDocument()->getWebAssetManager()->addInlineScript(<<<'JS'
+(() => {
+    const sync = () => {
+        const button = document.getElementById('toolbar-save');
+        const active = document.querySelector('#dharmaSitemapTabs > joomla-tab-element[active]');
+        if (button && active) button.hidden = active.id !== 'settings';
+    };
+    document.addEventListener('DOMContentLoaded', sync);
+    document.addEventListener('joomla.tab.show', () => setTimeout(sync, 0));
+    document.addEventListener('joomla.tab.shown', () => setTimeout(sync, 0));
+    window.addEventListener('load', () => setTimeout(sync, 150));
+})();
+JS);
+        }
+
         ToolbarHelper::preferences('com_dharmasitemap');
     }
 }
