@@ -386,8 +386,10 @@ final class SitemapBuilder
     /** Короткий текст для llms.txt: без тегов и переносов, не длиннее лимита столбца; пустое значение — NULL. */
     private static function text(?string $value, int $length): ?string
     {
-        $text = trim((string) preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags((string) $value), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
-        $text = mb_substr($text, 0, $length);
+        // Коды плагинов Joomla ({loadmoduleid 135}, {field 8}, {/gallery}) в текст для людей и нейросетей попадать не должны.
+        $plain = (string) preg_replace('/\{\/?[a-z][\w-]*(?:\s[^{}]*)?\}/iu', ' ', (string) $value);
+        $text  = trim((string) preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags($plain), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        $text  = mb_substr($text, 0, $length);
 
         return $text === '' ? null : $text;
     }

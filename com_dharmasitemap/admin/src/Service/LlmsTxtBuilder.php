@@ -102,6 +102,14 @@ final class LlmsTxtBuilder
         }
 
         $cut = mb_substr($text, 0, self::DESCRIPTION_LENGTH);
+
+        // Лучше закончить целым предложением, если оно не слишком короткое; иначе — по слову.
+        $end = max((int) mb_strrpos($cut, '. '), (int) mb_strrpos($cut, '! '), (int) mb_strrpos($cut, '? '));
+
+        if ($end >= 80) {
+            return mb_substr($cut, 0, $end + 1);
+        }
+
         $pos = mb_strrpos($cut, ' ');
 
         return rtrim($pos !== false && $pos > 100 ? mb_substr($cut, 0, $pos) : $cut, " ,;:-—") . '…';

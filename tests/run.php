@@ -323,6 +323,13 @@ $llmsItems = [
     ['url' => 'https://example.com/d', 'title' => 'Контакты', 'description' => '', 'section' => null],
 ];
 $llms = LlmsTxtBuilder::build(['title' => "Сайт\nкомпании", 'summary' => 'Кратко о сайте.', 'details' => "Подробности.\r\nВторая строка.", 'rename' => ['Uncategorised' => 'О компании'], 'order' => ['О компании', 'Нет такого']], $llmsItems);
+// Коды плагинов Joomla не попадают в текст описания; длинное описание заканчивается целым предложением.
+$textMethod = new ReflectionMethod(SitemapBuilder::class, 'text');
+$textMethod->setAccessible(true);
+check('plugin shortcodes are removed from description', $textMethod->invoke(null, '<p>Партнёры: {loadmoduleid 135} и {field 8} вместе {/gallery}.</p>', 500), 'Партнёры: и вместе .');
+$longItems = [['url' => 'https://example.com/long', 'title' => 'Длинная', 'section' => 'Услуги', 'description' => str_repeat('Это достаточно длинное первое предложение для проверки. ', 2) . str_repeat('Хвост без конца ', 20)]];
+$longLlms = LlmsTxtBuilder::build(['title' => 'Сайт', 'summary' => '', 'details' => ''], $longItems);
+check('long llms description ends with a whole sentence', (bool) preg_match('/: Это достаточно длинное первое предложение для проверки\. Это достаточно длинное первое предложение для проверки\.\n/u', $longLlms), true);
 check('llms starts with one-line title', str_starts_with($llms, "# Сайт компании\n"), true);
 check('llms has summary quote', str_contains($llms, "\n> Кратко о сайте.\n"), true);
 check('llms keeps details with unified line breaks', str_contains($llms, "\nПодробности.\nВторая строка.\n"), true);
